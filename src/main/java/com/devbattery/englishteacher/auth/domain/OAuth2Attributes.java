@@ -47,6 +47,7 @@ public class OAuth2Attributes {
                 .name((String) attributes.get("name"))
                 .email((String) attributes.get("email"))
                 .imageUrl((String) attributes.get("picture"))
+                //  Spring Security는 attributes 맵과 nameAttributeKey를 사용해서 데이터베이스에 사용자가 이미 있는지 여부를 판단하고, 사용자를 고유하게 식별함
                 .attributes(attributes)
                 .nameAttributeKey(userNameAttributeName)
                 .build();
@@ -54,7 +55,7 @@ public class OAuth2Attributes {
 
     /**
      * Naver 사용자 정보를 받아 OAuthAttributes 객체 생성
-     * Naver의 응답값은 "response"라는 키 값 내부에 실제 사용자 정보가 들어있습니다.
+     * Naver의 응답값은 "response"라는 키 값 내부에 실제 사용자 정보가 들어있습니다. (id 같은 거)
      */
     private static OAuth2Attributes ofNaver(String userNameAttributeName, Map<String, Object> attributes) {
         Map<String, Object> response = (Map<String, Object>) attributes.get("response");
