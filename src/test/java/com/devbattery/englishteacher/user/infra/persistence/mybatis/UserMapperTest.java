@@ -35,4 +35,24 @@ class UserMapperTest {
         assertThat(foundUser.getRoleKey()).isEqualTo("ROLE_USER");
     }
 
+    @DisplayName("DB단으로 User 정보가 수정되고 조회될 수 있다.")
+    @Test
+    void updateAndFindByEmail() {
+        // given
+        userMapper.save(new User("테스터", "test@mapper.com", "mapper.jpg", Role.USER));
+        User user = userMapper.findByEmail("test@mapper.com").get();
+
+        // when
+        userMapper.update(user);
+        Optional<User> foundUserOpt = userMapper.findByEmail("test@mapper.com");
+
+        // then
+        assertThat(foundUserOpt).isPresent();
+
+        User foundUser = foundUserOpt.get();
+        assertThat(foundUser.getName()).isEqualTo("테스터");
+        assertThat(foundUser.getEmail()).isEqualTo("test@mapper.com");
+        assertThat(foundUser.getRoleKey()).isEqualTo("ROLE_USER");
+    }
+
 }
