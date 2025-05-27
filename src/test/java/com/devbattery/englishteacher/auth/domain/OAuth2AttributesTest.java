@@ -31,4 +31,28 @@ class OAuth2AttributesTest {
         assertThat(result.getNameAttributeKey()).isEqualTo(userNameAttributeName);
     }
 
+    @Test
+    @DisplayName("네이버 로그인 시 사용자 정보를 정확히 파싱한다")
+    void ofNaver() {
+        // given
+        String registrationId = "naver";
+        String userNameAttributeName = "id"; // 네이버는 'response' 안에 'id'가 키
+        Map<String, Object> response = new HashMap<>();
+        response.put("name", "네이버");
+        response.put("email", "test@naver.com");
+        response.put("profile_image", "naver.jpg");
+
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("response", response); // 네이버는 response 키 안에 정보가 있음
+
+        // when
+        // ofNaver는 attributes.get("response")를 내부적으로 처리하도록 수정해야 함
+        OAuth2Attributes result = OAuth2Attributes.of(registrationId, userNameAttributeName, attributes);
+
+        // then
+        assertThat(result.getName()).isEqualTo("네이버");
+        assertThat(result.getEmail()).isEqualTo("test@naver.com");
+        assertThat(result.getImageUrl()).isEqualTo("naver.jpg");
+    }
+
 }
