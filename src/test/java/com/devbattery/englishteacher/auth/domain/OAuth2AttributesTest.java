@@ -55,4 +55,30 @@ class OAuth2AttributesTest {
         assertThat(result.getImageUrl()).isEqualTo("naver.jpg");
     }
 
+    @Test
+    @DisplayName("카카오 로그인 시 사용자 정보를 정확히 파싱한다")
+    void ofKakao() {
+        // given
+        String registrationId = "kakao";
+        String userNameAttributeName = "id";
+        Map<String, Object> kakaoAccount = new HashMap<>();
+        kakaoAccount.put("email", "test@kakao.com");
+
+        Map<String, Object> profile = new HashMap<>();
+        profile.put("nickname", "카카오");
+        profile.put("profile_image_url", "kakao.jpg");
+        kakaoAccount.put("profile", profile);
+
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("kakao_account", kakaoAccount);
+
+        // when
+        OAuth2Attributes result = OAuth2Attributes.of(registrationId, userNameAttributeName, attributes);
+
+        // then
+        assertThat(result.getName()).isEqualTo("카카오");
+        assertThat(result.getEmail()).isEqualTo("test@kakao.com");
+        assertThat(result.getImageUrl()).isEqualTo("kakao.jpg");
+    }
+
 }
