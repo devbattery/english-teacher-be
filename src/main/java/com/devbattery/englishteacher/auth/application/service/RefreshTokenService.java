@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RefreshTokenService {
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Value("${jwt.refresh-token-expire-time}")
     private long refreshTokenExpireTime;
@@ -29,7 +29,7 @@ public class RefreshTokenService {
 
     public String getToken(String email) {
         String key = REFRESH_TOKEN_PREFIX + email;
-        return redisTemplate.opsForValue().get(key);
+        return (String) redisTemplate.opsForValue().get(key);
     }
 
     public void deleteToken(String email) {
