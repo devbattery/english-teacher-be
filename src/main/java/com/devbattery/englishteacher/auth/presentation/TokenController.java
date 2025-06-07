@@ -1,16 +1,22 @@
 package com.devbattery.englishteacher.auth.presentation;
 
+import com.devbattery.englishteacher.auth.application.service.AuthCodeService;
 import com.devbattery.englishteacher.auth.application.service.RefreshTokenService;
+import com.devbattery.englishteacher.auth.presentation.dto.AuthTokens;
 import com.devbattery.englishteacher.common.util.CookieUtil;
 import com.devbattery.englishteacher.common.util.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -19,6 +25,37 @@ public class TokenController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
+    private final AuthCodeService authCodeService;
+
+    @Value("${jwt.refresh-token-expire-time}")
+    private long refreshTokenExpireTime;
+
+    /**
+     * OAuth2 로그인 성공 후 받은 임시 인증 코드를 실제 토큰으로 교환합니다.
+     */
+    @PostMapping("/api/auth/token")
+    public ResponseEntity<?> exchangeCodeForTokens(@RequestBody Map<String, String> payload,
+                                                   HttpServletResponse response) {
+        String code = payload.get("code");
+        if (code == null) {
+            return ResponseEntity.badRequest().body("Authorization code is missing.");
+        }
+
+        Optional<AuthTokens> tokensOptional = authCodeService.retrieveAndRemoveTokens(code);
+
+        if (tokensOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired authorization code.");
+        }
+
+        AuthTokens tokens = tokensOptional.get();
+
+        // HttpOnly 쿠키에 Refresh Token 설정
+        int cookieMaxAge = (int) (refreshTokenExpireTime / 1000);
+        CookieUtil.addCookie(response, "refresh_token", tokens.getRefreshToken(), cookieMaxAge);
+
+        // Access Token은 응답 바디로 전달
+        return ResponseEntity.ok(Map.of("accessToken", tokens.getAccessToken()));
+    }
 
     @PostMapping("/api/auth/refresh")
     public ResponseEntity<?> refreshAccessToken(HttpServletRequest request) {
