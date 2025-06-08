@@ -81,4 +81,27 @@ public class TokenController {
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
     }
 
+    /**
+     * 로그아웃을 처리합니다. 클라이언트의 Refresh Token 쿠키를 무효화하고, 서버(Redis)에서도 삭제합니다.
+     */
+    @PostMapping("/api/auth/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        // 1. 쿠키에서 리프레시 토큰 가져오기
+        Optional<Cookie> refreshTokenCookie = CookieUtil.getCookie(request, "refresh_token");
+
+        if (refreshTokenCookie.isPresent()) {
+            String refreshToken = refreshTokenCookie.get().getValue();
+            // 2. Redis에서 해당 리프레시 토큰 삭제
+            if (jwtTokenProvider.validateToken(refreshToken)) {
+                String email = jwtTokenProvider.getEmailFromToken(refreshToken);
+                refreshTokenService.deleteToken(email);
+            }
+        }
+
+        // 3. 클라이언트의 리프레시 토큰 쿠키를 삭제
+        CookieUtil.addCookie(response, "refresh_token", "", 0); // maxAge를 0으로 설정하여 즉시 만료
+
+        return ResponseEntity.ok("Successfully logged out");
+    }
+
 }
