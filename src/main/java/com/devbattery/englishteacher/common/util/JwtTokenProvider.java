@@ -27,6 +27,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtTokenProvider {
 
+    private final String AUTH_KEY = "auth";
+
     private final Key key;
     private final long accessTokenExpireTime;
     private final long refreshTokenExpireTime;
@@ -62,7 +64,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .setSubject(authentication.getName())
-                .claim("auth", authorities)
+                .claim(AUTH_KEY, authorities)
                 .setIssuedAt(new Date())
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -71,11 +73,11 @@ public class JwtTokenProvider {
 
     public Authentication getAuthentication(String accessToken) {
         Claims claims = parseClaims(accessToken);
-        if (claims.get("auth") == null) {
+        if (claims.get(AUTH_KEY) == null) {
             throw new RuntimeException("권한 정보가 없는 토큰입니다.");
         }
         Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(claims.get("auth").toString().split(","))
+                Arrays.stream(claims.get(AUTH_KEY).toString().split(","))
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
         UserDetails principal = new User(claims.getSubject(), "", authorities);

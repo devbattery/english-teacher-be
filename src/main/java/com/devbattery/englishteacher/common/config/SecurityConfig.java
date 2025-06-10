@@ -6,10 +6,9 @@ import com.devbattery.englishteacher.common.handler.OAuth2LoginSuccessHandler;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -29,19 +28,27 @@ public class SecurityConfig {
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final JwtAuthFilter jwtAuthFilter;
 
+    // application.yml 등에서 값을 주입받도록 변경
+    @Value("${cors.allowed-origins}")
+    private String[] allowedOrigins;
+
+    // URL 경로를 상수로 관리하여 유지보수성 향상
+    private static final String[] PUBLIC_URLS = {
+            "/", "/css/**", "/images/**", "/js/**", "/h2-console/**",
+            "/api/auth/token", "/api/auth/refresh", "/api/auth/logout"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // corsConfigurationSource를 직접 지정
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .headers(x -> x.frameOptions(FrameOptionsConfig::disable))
                 .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/h2-console/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/auth/token").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/auth/refresh").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/auth/logout").permitAll()
+                        // HttpMethod와 관계없이 허용할 URL들을 한 번에 처리
+                        .requestMatchers(PUBLIC_URLS).permitAll()
                         .anyRequest().authenticated()
                 ).oauth2Login(
                         oauth2 -> oauth2
@@ -57,17 +64,15 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // TODO: (임시)
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        // 허용할 HTTP 메서드를 지정합니다.
+        // 프로퍼티에서 읽어온 값으로 설정
+        configuration.setAllowedOrigins(List.of(allowedOrigins));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        // 허용할 HTTP 헤더를 지정합니다.
         configuration.setAllowedHeaders(List.of("*"));
-        // 자격 증명(쿠키, 인증 헤더 등)을 허용합니다.
         configuration.setAllowCredentials(true);
+        // 캐시 시간을 설정하여 pre-flight 요청 빈도를 줄일 수 있습니다.
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // 모든 경로에 대해 위에서 정의한 CORS 설정을 적용합니다.
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
