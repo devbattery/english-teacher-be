@@ -32,12 +32,6 @@ public class SecurityConfig {
     @Value("${cors.allowed-origins}")
     private String[] allowedOrigins;
 
-    // URL 경로를 상수로 관리하여 유지보수성 향상
-    private static final String[] PUBLIC_URLS = {
-            "/", "/css/**", "/images/**", "/js/**", "/h2-console/**",
-            "/api/auth/token", "/api/auth/refresh", "/api/auth/logout"
-    };
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -48,7 +42,7 @@ public class SecurityConfig {
                 .headers(x -> x.frameOptions(FrameOptionsConfig::disable))
                 .authorizeHttpRequests((authorize) -> authorize
                         // HttpMethod와 관계없이 허용할 URL들을 한 번에 처리
-                        .requestMatchers(PUBLIC_URLS).permitAll()
+                        .requestMatchers(AuthEndpoints.PERMIT_ALL_PATTERNS).permitAll()
                         .anyRequest().authenticated()
                 ).oauth2Login(
                         oauth2 -> oauth2
