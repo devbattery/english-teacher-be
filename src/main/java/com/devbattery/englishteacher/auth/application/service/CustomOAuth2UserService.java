@@ -1,6 +1,7 @@
 package com.devbattery.englishteacher.auth.application.service;
 
 import com.devbattery.englishteacher.auth.domain.OAuth2Attributes;
+import com.devbattery.englishteacher.auth.domain.UserPrincipal;
 import com.devbattery.englishteacher.user.application.UserConvertor;
 import com.devbattery.englishteacher.user.application.service.UserReadService;
 import com.devbattery.englishteacher.user.application.service.UserWriteService;
@@ -41,13 +42,12 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 oAuth2User.getAttributes());
         User user = login(attributes);
 
-        Map<String, Object> customAttributes = new HashMap<>(attributes.getAttributes());
-        customAttributes.put("email", attributes.getEmail());
-
-        return new DefaultOAuth2User(
+        // DefaultOAuth2User 대신 UserPrincipal을 생성하여 반환
+        return new UserPrincipal(
+                user.getId(),
+                user.getEmail(),
                 Collections.singleton(new SimpleGrantedAuthority(user.getRoleKey())),
-                customAttributes,
-                "email" // Principal의 name 속성 키
+                oAuth2User.getAttributes()
         );
     }
 

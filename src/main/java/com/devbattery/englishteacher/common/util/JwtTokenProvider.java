@@ -1,5 +1,6 @@
 package com.devbattery.englishteacher.common.util;
 
+import com.devbattery.englishteacher.auth.domain.UserPrincipal;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -76,11 +77,22 @@ public class JwtTokenProvider {
         if (claims.get(AUTH_KEY) == null) {
             throw new RuntimeException("권한 정보가 없는 토큰입니다.");
         }
+
         Collection<? extends GrantedAuthority> authorities =
                 Arrays.stream(claims.get(AUTH_KEY).toString().split(","))
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
-        UserDetails principal = new User(claims.getSubject(), "", authorities);
+
+        // ★★★ User 대신 UserPrincipal 객체를 생성 ★★★
+        // JWT 토큰에는 id 정보가 없으므로, 필요하다면 DB에서 이메일로 조회하거나,
+        // 토큰 생성 시 id를 claim에 추가해야 합니다. 여기서는 null로 처리합니다.
+        // 하지만 컨트롤러에서 id를 사용하지 않는다면 null도 괜찮습니다.
+        UserPrincipal principal = new UserPrincipal(
+                claims.get("id", Long.class),
+                claims.getSubject(), // 이메일
+                authorities
+        );
+
         return new UsernamePasswordAuthenticationToken(principal, "", authorities);
     }
 
