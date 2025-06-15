@@ -20,8 +20,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -29,6 +27,7 @@ import org.springframework.stereotype.Component;
 public class JwtTokenProvider {
 
     private final String AUTH_KEY = "auth";
+    private final String ID_KEY = "id"; // ID 클레임의 키를 상수로 정의
 
     private final Key key;
     private final long accessTokenExpireTime;
@@ -56,7 +55,10 @@ public class JwtTokenProvider {
     }
 
     private String generateToken(Authentication authentication, long expireTime) {
-        String authorities = authentication.getAuthorities().stream()
+        // ★★★ 1. Authentication 객체에서 UserPrincipal을 가져옵니다. ★★★
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+        String authorities = userPrincipal.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
@@ -64,8 +66,9 @@ public class JwtTokenProvider {
         Date validity = new Date(now + expireTime);
 
         return Jwts.builder()
-                .setSubject(authentication.getName())
-                .claim(AUTH_KEY, authorities)
+                .setSubject(userPrincipal.getUsername()) // 이메일
+                .claim(AUTH_KEY, authorities)         // 권한
+                .claim(ID_KEY, userPrincipal.getId()) // ★★★ 2. id 클레임을 추가합니다! ★★★
                 .setIssuedAt(new Date())
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -83,13 +86,10 @@ public class JwtTokenProvider {
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
 
-        // ★★★ User 대신 UserPrincipal 객체를 생성 ★★★
-        // JWT 토큰에는 id 정보가 없으므로, 필요하다면 DB에서 이메일로 조회하거나,
-        // 토큰 생성 시 id를 claim에 추가해야 합니다. 여기서는 null로 처리합니다.
-        // 하지만 컨트롤러에서 id를 사용하지 않는다면 null도 괜찮습니다.
+        // ★★★ 3. 이제 claims.get("id", Long.class)는 절대 null이 아닙니다. ★★★
         UserPrincipal principal = new UserPrincipal(
-                claims.get("id", Long.class),
-                claims.getSubject(), // 이메일
+                claims.get(ID_KEY, Long.class), // 상수를 사용하도록 변경
+                claims.getSubject(),
                 authorities
         );
 
