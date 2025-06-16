@@ -99,7 +99,7 @@ public class TokenController {
         }
 
         // 3. 클라이언트의 리프레시 토큰 쿠키를 삭제
-        CookieUtil.addCookie(response, "refresh_token", "", 0); // maxAge를 0으로 설정하여 즉시 만료
+        CookieUtil.deleteCookie(response, "refresh_token");
 
         return ResponseEntity.ok("Successfully logged out");
     }
