@@ -10,20 +10,20 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 @Getter
 public class UserPrincipal implements UserDetails, OAuth2User {
 
-    private final long id;
+    private final Long id;
     private final String email;
     private final Collection<? extends GrantedAuthority> authorities;
     private Map<String, Object> attributes;
 
     // UserDetails 생성자 (JWT 인증용)
-    public UserPrincipal(long id, String email, Collection<? extends GrantedAuthority> authorities) {
+    public UserPrincipal(Long id, String email, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
         this.authorities = authorities;
     }
 
     // OAuth2User 생성자 (OAuth 로그인용)
-    public UserPrincipal(long id, String email, Collection<? extends GrantedAuthority> authorities,
+    public UserPrincipal(Long id, String email, Collection<? extends GrantedAuthority> authorities,
                          Map<String, Object> attributes) {
         this.id = id;
         this.email = email;
