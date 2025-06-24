@@ -26,8 +26,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     private final RefreshTokenService refreshTokenService;
     private final AuthCodeService authCodeService;
 
-    @Value("${jwt.refresh-token-expire-time}")
-    private long refreshTokenExpireTime;
+    @Value("${url.base}")
+    private String url;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -66,7 +66,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
     // `determineTargetUrl` 메서드 시그니처를 수정하여 accessToken 대신 code를 받도록 합니다.
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response, String code) {
-        String targetUrl = "http://localhost:5173/auth/callback"; // 프론트엔드의 콜백 페이지
+        String targetUrl = url + "/auth/callback"; // 프론트엔드의 콜백 페이지
 
         return UriComponentsBuilder.fromUriString(targetUrl)
                 .queryParam("code", code) // "token" 대신 "code" 사용
@@ -78,7 +78,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) {
         // 이 메서드는 우리가 직접 호출하지 않으므로, 기본 URL을 반환하도록 둘 수 있습니다.
-        return "http://localhost:5173"; // 프론트엔드 기본 URL
+        return url;
     }
 
 }
