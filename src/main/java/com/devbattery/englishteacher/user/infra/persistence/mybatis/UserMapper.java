@@ -13,4 +13,6 @@ public interface UserMapper {
 
     void update(User user);
 
+    Optional<User> findById(Long userId);
+
 }

@@ -16,6 +16,12 @@
         WHERE EMAIL = #{email}
     </select>
 
+    <select id="findById" parameterType="Long" resultType="com.devbattery.englishteacher.user.domain.entity.User">
+        SELECT ID, NAME, EMAIL, IMAGE_URL, ROLE
+        FROM USERS
+        WHERE ID = #{userId}
+    </select>
+
     <!--
         save 메소드에 대한 SQL.
         User 객체를 파라미터로 받아 각 필드를 컬럼에 삽입합니다.

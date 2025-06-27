@@ -11,4 +11,6 @@ public interface UserRepository {
 
     void update(User user);
 
+    Optional<User> fetchById(Long userId);
+
 }

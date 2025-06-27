@@ -19,4 +19,9 @@ public class UserReadService {
                 .orElseThrow(() -> new UsernameNotFoundException(email)); // TODO: Custom Exception
     }
 
+    public User fetchById(Long userId) {
+        return userRepository.fetchById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException(String.valueOf(userId))); // TODO: Custom Exception
+    }
+
 }

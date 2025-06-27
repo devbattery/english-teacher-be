@@ -28,4 +28,9 @@ public class UserRepositoryImpl implements UserRepository {
         userMapper.update(user);
     }
 
+    @Override
+    public Optional<User> fetchById(Long userId) {
+        return userMapper.findById(userId);
+    }
+
 }

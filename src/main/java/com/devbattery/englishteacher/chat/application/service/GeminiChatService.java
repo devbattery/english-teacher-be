@@ -2,10 +2,13 @@
 package com.devbattery.englishteacher.chat.application.service;
 
 import com.devbattery.englishteacher.chat.domain.ChatConversation;
-import com.devbattery.englishteacher.chat.domain.repository.ChatConversationRepository;
 import com.devbattery.englishteacher.chat.domain.ChatMessage;
+import com.devbattery.englishteacher.chat.domain.repository.ChatConversationRepository;
+import com.devbattery.englishteacher.user.application.service.UserReadService;
+import com.devbattery.englishteacher.user.domain.entity.User;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +30,8 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor // 생성자 주입을 위한 Lombok 어노테이션
 public class GeminiChatService {
 
+    private final UserReadService userReadService;
+
     @Value("${gemini.api.key}")
     private String apiKey;
 
@@ -45,7 +50,29 @@ public class GeminiChatService {
     public List<ChatMessage> getConversationHistory(Long userId, String level) {
         return chatConversationRepository.fetchByUserIdAndTeacherLevel(userId, level)
                 .map(ChatConversation::getMessages)
-                .orElse(List.of());
+                .orElseGet(() -> {
+                    User user = userReadService.fetchById(userId);
+                    ChatMessage firstMessage = createFirstMessageForLevel(level, user.getName());
+                    return List.of(firstMessage);
+                });
+    }
+
+    private ChatMessage createFirstMessageForLevel(String level, String userName) {
+        String text = switch (level) {
+            case "beginner" ->
+                    String.format("Hello, %s!. Let's start slowly. What did you do today?", userName);
+            case "intermediate" ->
+                    String.format("Hey %s, welcome! Ready to level up your English? What's on your mind?", userName);
+            case "advanced" ->
+                    String.format("Good to see you, %s. Let's delve into a stimulating discussion. What's our topic?",
+                            userName);
+            case "ielts" ->
+                    "This is the IELTS speaking test simulation. Could you tell me your full name, please?";
+            default -> String.format("Hi %s! Let's have a great conversation. What would you like to talk about?",
+                    userName);
+        };
+        // 첫 메시지를 ChatMessage 객체로 만들어 반환
+        return new ChatMessage("ai", text, LocalDateTime.now());
     }
 
     /**
