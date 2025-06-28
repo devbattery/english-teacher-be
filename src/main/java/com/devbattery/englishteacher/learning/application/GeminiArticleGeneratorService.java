@@ -87,22 +87,24 @@ public class GeminiArticleGeneratorService {
 
     private String createPromptForLevel(String level) {
         String levelDescription = switch (level) {
+            // ... (levelDescription 생성 부분은 동일) ...
             case "beginner" -> "for absolute beginners. Use very simple vocabulary and short sentences.";
             case "intermediate" -> "for intermediate learners. Use common idioms and slightly more complex sentences.";
             case "advanced" -> "for advanced learners. Use sophisticated vocabulary and complex sentence structures.";
-            case "ielts" ->
-                    "for students preparing for the IELTS test. Focus on a topic relevant to the speaking or writing test, using academic vocabulary.";
+            case "ielts" -> "for students preparing for the IELTS test. Focus on a topic relevant to the speaking or writing test, using academic vocabulary.";
             default -> "for general English learners.";
         };
 
         return "You are an expert English teacher creating learning materials. " +
                 "Your task is to write a short English article " + levelDescription + ". " +
-                "After writing the article, you MUST identify 3 key expressions from the article that would be helpful for the learner. " +
+                // [핵심 수정] "3개" 라는 제한을 없애고 "모든 관련 표현"을 요청합니다.
+                "After writing the article, you MUST identify all relevant key expressions from the article that would be helpful for the learner. The number of expressions can vary depending on the article's content. " +
                 "Your entire response MUST be a single, valid JSON object. Do not add any text outside of the JSON object. " +
                 "The JSON object must have exactly three keys: " +
                 "1. 'title': a string for the article's title. " +
                 "2. 'content': a string for the full article content. " +
-                "3. 'keyExpressions': an array of JSON objects. Each object in the array must have two keys: 'expression' (the English phrase) and 'meaning' (its Korean translation).";
+                // [핵심 수정] keyExpressions에 대한 설명은 동일하게 유지합니다.
+                "3. 'keyExpressions': an array of JSON objects. Each object in the array must have two keys: 'expression' (the English phrase) and 'meaning' (its Korean translation). If there are no key expressions, return an empty array [].";
     }
 
     private String createRequestBody(String prompt) {
