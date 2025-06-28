@@ -89,7 +89,6 @@ public class GeminiArticleGeneratorService {
 
     private String createPromptForLevel(String level) {
         String levelDescription = switch (level) {
-            // ... (levelDescription 생성 부분은 동일) ...
             case "beginner" -> "for absolute beginners. Use very simple vocabulary and short sentences.";
             case "intermediate" -> "for intermediate learners. Use common idioms and slightly more complex sentences.";
             case "advanced" -> "for advanced learners. Use sophisticated vocabulary and complex sentence structures.";
@@ -98,7 +97,7 @@ public class GeminiArticleGeneratorService {
         };
 
         String promptTemplate = promptProperties.getLearning();
-        return promptTemplate.replace("{levelDescription}", promptTemplate);
+        return promptTemplate.replace("{levelDescription}", levelDescription);
     }
 
     private String createRequestBody(String prompt) {
