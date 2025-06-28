@@ -67,7 +67,7 @@ public class GeminiChatService {
                     String.format("Good to see you, %s. Let's delve into a stimulating discussion. What's our topic?",
                             userName);
             case "ielts" ->
-                    "This is the IELTS speaking test simulation. Could you tell me your full name, please?";
+                    "This is the IELTS test simulation. Could you tell me your full name, please?";
             default -> String.format("Hi %s! Let's have a great conversation. What would you like to talk about?",
                     userName);
         };

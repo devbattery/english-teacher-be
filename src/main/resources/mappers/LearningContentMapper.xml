@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.devbattery.englishteacher.learning.infra.persistence.mybatis.LearningContentMapper">
+
+    <select id="findByLevelAndDate" resultType="com.devbattery.englishteacher.learning.domain.LearningContent">
+        SELECT
+            id,
+            level,
+            title,
+            content,
+            created_date AS createdDate
+        FROM
+            LEARNING_CONTENT
+        WHERE
+            level = #{level} AND created_date = #{date}
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO LEARNING_CONTENT (level, title, content, created_date)
+        VALUES (#{level}, #{title}, #{content}, #{createdDate})
+    </insert>
+
+</mapper>
