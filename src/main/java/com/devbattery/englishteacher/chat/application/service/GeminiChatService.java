@@ -4,6 +4,7 @@ package com.devbattery.englishteacher.chat.application.service;
 import com.devbattery.englishteacher.chat.domain.ChatConversation;
 import com.devbattery.englishteacher.chat.domain.ChatMessage;
 import com.devbattery.englishteacher.chat.domain.repository.ChatConversationRepository;
+import com.devbattery.englishteacher.common.config.GeminiPromptProperties;
 import com.devbattery.englishteacher.user.application.service.UserReadService;
 import com.devbattery.englishteacher.user.domain.entity.User;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,6 +32,7 @@ import org.springframework.web.client.RestTemplate;
 public class GeminiChatService {
 
     private final UserReadService userReadService;
+    private final GeminiPromptProperties promptProperties;
 
     @Value("${gemini.api.key}")
     private String apiKey;
@@ -124,30 +126,9 @@ public class GeminiChatService {
 
     // ... createSystemPrompt, parseResponse 메소드는 기존과 동일 ...
     private String createSystemPrompt(String level) {
-        return switch (level) {
-            case "beginner" -> "You are a friendly and extremely patient English teacher for absolute beginners. " +
-                    "Your name is 'Tutorbot'. Use very simple words, short sentences, and basic grammar. " +
-                    "If the user makes a mistake, gently correct it in a simple way and always be encouraging. " +
-                    "For example, if a user says 'I go to school yesterday', you can say 'Great try! A better way to say that is: I *went* to school yesterday. We use 'went' for the past.'";
-            case "intermediate" -> "You are a helpful and engaging English coach for intermediate learners. " +
-                    "Talk to the user like a friend. Focus on improving their fluency and introducing more natural-sounding expressions. "
-                    +
-                    "When you correct them, suggest better vocabulary or alternative sentence structures, and briefly explain the nuance. "
-                    +
-                    "For example, instead of just correcting grammar, if a user says 'I am happy', you could suggest 'That's great! You could also say 'I'm thrilled' or 'I'm over the moon' to sound more expressive.'";
-            case "advanced" ->
-                    "You are an expert English tutor and a sophisticated conversation partner for advanced learners. " +
-                            "Engage in deep and complex conversations on various topics. Use a rich range of vocabulary, idioms, and complex sentence structures. "
-                            +
-                            "Feel free to challenge the user with thought-provoking questions and provide feedback on their style, tone, and rhetorical effectiveness as if you were a university professor.";
-            case "ielts" ->
-                    "You are a professional and strict IELTS speaking test examiner. Your goal is to simulate a real IELTS test. "
-                            +
-                            "Start by saying 'This is the speaking part of the International English Language Testing System. My name is [Your Examiner Name]. Can you tell me your full name, please?'. "
-                            +
-                            "Then, ask questions typical of Part 1, 2, and 3. Be formal. After the user's response to a full part, provide a band score estimate and detailed, critical feedback on Fluency and Coherence, Lexical Resource, Grammatical Range and Accuracy, and Pronunciation.";
-            default -> "You are a general English conversation partner. Be friendly and natural.";
-        };
+        return promptProperties.getChat().getOrDefault(
+                level, promptProperties.getChat().get("default")
+        );
     }
 
     /**

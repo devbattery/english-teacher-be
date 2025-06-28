@@ -1,5 +1,6 @@
 package com.devbattery.englishteacher.learning.application;
 
+import com.devbattery.englishteacher.common.config.GeminiPromptProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
@@ -28,6 +29,7 @@ public class GeminiArticleGeneratorService {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final GeminiPromptProperties promptProperties;
 
     /**
      * [수정됨] 이제 이 메소드는 API 응답에서 핵심 JSON 문자열만 추출하여 반환합니다.
@@ -95,16 +97,8 @@ public class GeminiArticleGeneratorService {
             default -> "for general English learners.";
         };
 
-        return "You are an expert English teacher creating learning materials. " +
-                "Your task is to write a short English article " + levelDescription + ". " +
-                // [핵심 수정] "3개" 라는 제한을 없애고 "모든 관련 표현"을 요청합니다.
-                "After writing the article, you MUST identify all relevant key expressions from the article that would be helpful for the learner. The number of expressions can vary depending on the article's content. " +
-                "Your entire response MUST be a single, valid JSON object. Do not add any text outside of the JSON object. " +
-                "The JSON object must have exactly three keys: " +
-                "1. 'title': a string for the article's title. " +
-                "2. 'content': a string for the full article content. " +
-                // [핵심 수정] keyExpressions에 대한 설명은 동일하게 유지합니다.
-                "3. 'keyExpressions': an array of JSON objects. Each object in the array must have two keys: 'expression' (the English phrase) and 'meaning' (its Korean translation). If there are no key expressions, return an empty array [].";
+        String promptTemplate = promptProperties.getLearning();
+        return promptTemplate.replace("{levelDescription}", promptTemplate);
     }
 
     private String createRequestBody(String prompt) {
