@@ -95,13 +95,14 @@ public class GeminiArticleGeneratorService {
             default -> "for general English learners.";
         };
 
-        return "You are an expert English teacher. Your task is to write a short, helpful, and interesting English learning article "
-                +
-                levelDescription +
-                " The topic should be engaging for language learners. " +
-                "Your response MUST be a single, valid JSON object with exactly two keys: 'title' (a string) and 'content' (a string). "
-                +
-                "Do not include any explanation or text outside of the JSON object itself.";
+        return "You are an expert English teacher creating learning materials. " +
+                "Your task is to write a short English article " + levelDescription + ". " +
+                "After writing the article, you MUST identify 3 key expressions from the article that would be helpful for the learner. " +
+                "Your entire response MUST be a single, valid JSON object. Do not add any text outside of the JSON object. " +
+                "The JSON object must have exactly three keys: " +
+                "1. 'title': a string for the article's title. " +
+                "2. 'content': a string for the full article content. " +
+                "3. 'keyExpressions': an array of JSON objects. Each object in the array must have two keys: 'expression' (the English phrase) and 'meaning' (its Korean translation).";
     }
 
     private String createRequestBody(String prompt) {

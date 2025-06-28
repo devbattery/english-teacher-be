@@ -20,3 +20,5 @@ CREATE TABLE LEARNING_CONTENT (
                                   created_date DATE NOT NULL,          -- 생성된 날짜 (매일 콘텐츠를 구분하기 위함)
                                   UNIQUE KEY uk_level_date (level, created_date) -- 특정 레벨의 콘텐츠는 하루에 하나만 존재하도록 보장
 );
+
+ALTER TABLE LEARNING_CONTENT ADD COLUMN key_expressions JSON NULL;

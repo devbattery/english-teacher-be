@@ -1,10 +1,14 @@
 package com.devbattery.englishteacher.learning.application;
 
+import com.devbattery.englishteacher.learning.domain.KeyExpression;
 import com.devbattery.englishteacher.learning.domain.LearningContent;
 import com.devbattery.englishteacher.learning.domain.repository.LearningContentRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,24 +56,23 @@ public class LearningService {
         // -----------------------------
 
         try {
-            // 3-2. 받은 JSON을 파싱하여 LearningContent 객체로 변환
             JsonNode rootNode = objectMapper.readTree(articleJson);
-
-            // [추가 디버깅] 만약 title이나 content가 없을 경우, 전체 JSON 구조를 다시 로그로 남깁니다.
-            JsonNode titleNode = rootNode.path("title");
-            JsonNode contentNode = rootNode.path("content");
-
-            if (titleNode.isMissingNode() || contentNode.isMissingNode()) {
-                log.warn("Could not find 'title' or 'content' in the response. Full JSON: {}", articleJson);
-            }
-            //
-
             String title = rootNode.path("title").asText("No Title Provided");
             String contentText = rootNode.path("content").asText("No content available.");
 
-            LearningContent newContent = new LearningContent(null, level, title, contentText, today);
+            // [핵심 추가] keyExpressions 파싱
+            List<KeyExpression> expressions = Collections.emptyList();
+            JsonNode expressionsNode = rootNode.path("keyExpressions");
+            if (expressionsNode.isArray()) {
+                try {
+                    expressions = objectMapper.convertValue(expressionsNode, new TypeReference<List<KeyExpression>>() {});
+                } catch (IllegalArgumentException e) {
+                    log.error("Error converting keyExpressions node for level {}: {}", level, expressionsNode.toString(), e);
+                }
+            }
 
-            // 3-3. 변환된 객체를 DB에 저장
+            // [수정] newContent 생성자에 expressions 추가
+            LearningContent newContent = new LearningContent(null, level, title, contentText, expressions, today);
             learningContentRepository.save(newContent);
             log.info("Successfully generated and saved new content for level '{}'.", level);
             return newContent;
