@@ -14,5 +14,6 @@ public class GeminiPromptProperties {
 
     private String learning;
     private Map<String, String> chat;
+    private Map<String, String> levelDescriptions; // [추가]
 
 }
