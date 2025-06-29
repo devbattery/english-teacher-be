@@ -1,5 +1,6 @@
 package com.devbattery.englishteacher.learning.application;
 
+import com.devbattery.englishteacher.learning.application.dto.LearningContentResponse;
 import com.devbattery.englishteacher.learning.domain.KeyExpression;
 import com.devbattery.englishteacher.learning.domain.LearningContent;
 import com.devbattery.englishteacher.learning.domain.repository.LearningContentRepository;
@@ -34,14 +35,14 @@ public class LearningService {
      * @return 오늘의 학습 콘텐츠 (LearningContent 객체)
      */
     @Transactional
-    public LearningContent getDailyContent(String level) {
+    public LearningContentResponse getDailyContent(String level) {
         LocalDate today = LocalDate.now();
         // 1. DB에서 기존 콘텐츠 확인
         Optional<LearningContent> existingContent = learningContentRepository.fetchByLevelAndDate(level, today);
 
         if (existingContent.isPresent()) {
             log.info("Found existing learning content for level '{}' on {}", level, today);
-            return existingContent.get(); // 2. 있으면 반환
+            return new LearningContentResponse("FOUND_EXISTING", existingContent.get());
         }
 
         // 3. 없으면 새로 생성
@@ -65,9 +66,11 @@ public class LearningService {
             JsonNode expressionsNode = rootNode.path("keyExpressions");
             if (expressionsNode.isArray()) {
                 try {
-                    expressions = objectMapper.convertValue(expressionsNode, new TypeReference<List<KeyExpression>>() {});
+                    expressions = objectMapper.convertValue(expressionsNode, new TypeReference<List<KeyExpression>>() {
+                    });
                 } catch (IllegalArgumentException e) {
-                    log.error("Error converting keyExpressions node for level {}: {}", level, expressionsNode.toString(), e);
+                    log.error("Error converting keyExpressions node for level {}: {}", level,
+                            expressionsNode.toString(), e);
                 }
             }
 
@@ -75,8 +78,8 @@ public class LearningService {
             LearningContent newContent = new LearningContent(null, level, title, contentText, expressions, today);
             learningContentRepository.save(newContent);
             log.info("Successfully generated and saved new content for level '{}'.", level);
-            return newContent;
 
+            return new LearningContentResponse("GENERATED_NEW", newContent);
         } catch (Exception e) {
             log.error("Failed to parse AI-generated article JSON for level {}: {}", level, articleJson, e);
             throw new RuntimeException("Could not process the generated learning content.", e);

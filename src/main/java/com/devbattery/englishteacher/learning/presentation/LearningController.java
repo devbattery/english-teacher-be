@@ -1,7 +1,7 @@
 package com.devbattery.englishteacher.learning.presentation;
 
 import com.devbattery.englishteacher.learning.application.LearningService;
-import com.devbattery.englishteacher.learning.domain.LearningContent;
+import com.devbattery.englishteacher.learning.application.dto.LearningContentResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,8 +15,8 @@ public class LearningController {
     private final LearningService learningService;
 
     @GetMapping("/api/learning/today/{level}")
-    public ResponseEntity<LearningContent> getDailyLearningContent(@PathVariable String level) {
-        LearningContent content = learningService.getDailyContent(level);
+    public ResponseEntity<?> getDailyLearningContent(@PathVariable String level) {
+        LearningContentResponse content = learningService.getDailyContent(level);
         return ResponseEntity.ok(content);
     }
 
