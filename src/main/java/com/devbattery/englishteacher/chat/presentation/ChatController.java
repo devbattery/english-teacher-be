@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,10 +37,22 @@ public class ChatController {
     @GetMapping("/api/chat/history/{level}")
     public ResponseEntity<List<ChatMessage>> getChatHistory(@PathVariable String level,
                                                             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        // 실제로는 Spring Security 등을 통해 인증된 사용자 정보를 가져와야 합니다.
         Long userId = userPrincipal.getId();
         List<ChatMessage> history = geminiChatService.getConversationHistory(userId, level);
         return ResponseEntity.ok(history);
+    }
+
+    /**
+     * [신규] 특정 선생님과의 채팅 기록을 초기화하는 엔드포인트
+     * @param level 초기화할 선생님 레벨
+     * @return 성공 응답
+     */
+    @DeleteMapping("/api/chat/history/{level}")
+    public ResponseEntity<Void> resetChatHistory(@PathVariable String level,
+                                                 @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        Long userId = userPrincipal.getId();
+        geminiChatService.resetChatHistory(userId, level);
+        return ResponseEntity.ok().build();
     }
 
 }

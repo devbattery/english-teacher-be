@@ -23,4 +23,9 @@ public class ChatConversationRepositoryImpl implements ChatConversationRepositor
         chatConversationMongoRepository.save(chatConversation);
     }
 
+    @Override
+    public void deleteByUserIdAndTeacherLevel(Long userId, String level) {
+        chatConversationMongoRepository.deleteByUserIdAndTeacherLevel(userId, level);
+    }
+
 }

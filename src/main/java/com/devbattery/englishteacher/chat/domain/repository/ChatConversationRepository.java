@@ -9,4 +9,6 @@ public interface ChatConversationRepository {
 
     void save(ChatConversation chatConversation);
 
+    void deleteByUserIdAndTeacherLevel(Long userId, String level);
+
 }

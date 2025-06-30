@@ -8,4 +8,6 @@ public interface ChatConversationMongoRepository extends MongoRepository<ChatCon
 
     Optional<ChatConversation> findByUserIdAndTeacherLevel(Long userId, String teacherLevel);
 
+    void deleteByUserIdAndTeacherLevel(Long userId, String level);
+
 }

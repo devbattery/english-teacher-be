@@ -202,4 +202,15 @@ public class GeminiChatService {
         }
     }
 
+    /**
+     * [신규] 특정 선생님과의 대화 기록을 초기화(삭제)합니다.
+     * @param userId 사용자 ID
+     * @param level  선생님 레벨
+     */
+    @Transactional
+    public void resetChatHistory(Long userId, String level) {
+        chatConversationRepository.deleteByUserIdAndTeacherLevel(userId, level);
+        log.info("Chat history for user {} with teacher level '{}' has been reset.", userId, level);
+    }
+
 }
