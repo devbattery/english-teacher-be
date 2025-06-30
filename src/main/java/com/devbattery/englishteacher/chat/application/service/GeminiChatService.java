@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -78,24 +79,35 @@ public class GeminiChatService {
     }
 
     /**
-     * [수정] 사용자의 메시지를 받아 DB에 저장하고, 전체 대화 맥락을 포함하여 Gemini API에 응답을 요청합니다.
-     * @param userId      사용자 ID
-     * @param level       선생님 레벨
-     * @param userMessage 사용자 메시지
-     * @return Gemini API가 생성한 응답 텍스트
+     * [수정] 첫 대화 시, AI의 첫인사 메시지도 함께 저장하도록 로직 변경
      */
-    @Transactional // DB 저장과 API 호출을 하나의 트랜잭션으로 묶음
+    @Transactional
     public String getChatResponse(Long userId, String level, String userMessage) {
+
+        // [신규] 이 대화가 새로 생성된 것인지 추적하기 위한 플래그
+        AtomicBoolean isFirstConversation = new AtomicBoolean(false);
+
         // 1. 사용자 ID와 레벨로 기존 대화내역을 찾거나 새로 생성
         ChatConversation conversation = chatConversationRepository
                 .fetchByUserIdAndTeacherLevel(userId, level)
-                .orElseGet(() -> new ChatConversation(userId, level));
+                .orElseGet(() -> {
+                    isFirstConversation.set(true); // 새로 생성되었음을 표시
+                    return new ChatConversation(userId, level);
+                });
+
+        // [핵심 로직] 만약 이 대화가 새로 생성된 것이라면, AI의 첫인사를 먼저 추가합니다.
+        if (isFirstConversation.get()) {
+            User user = userReadService.fetchById(userId);
+            ChatMessage firstAiMessage = createFirstMessageForLevel(level, user.getName());
+            conversation.addMessage(firstAiMessage.getSender(), firstAiMessage.getText());
+        }
 
         // 2. 현재 사용자의 메시지를 대화에 추가
         conversation.addMessage("user", userMessage);
 
         // 3. API 요청 본문 생성 (시스템 프롬프트 + 전체 대화 기록)
         String systemPrompt = createSystemPrompt(level);
+        // 이제 conversation.getMessages()에는 첫인사(필요시)와 사용자 메시지가 모두 포함됨
         String requestBody = createRequestBodyWithHistory(systemPrompt, conversation.getMessages());
 
         HttpHeaders headers = new HttpHeaders();
@@ -117,6 +129,8 @@ public class GeminiChatService {
 
         } catch (HttpClientErrorException e) {
             log.error("Gemini API Error - Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
+            // 에러 발생 시, 임시로 추가했던 사용자 메시지를 롤백하는 것이 좋습니다.
+            // 하지만 현재 구조상 conversation이 메모리에만 있으므로, DB에 저장되지 않아 자동 롤백됩니다.
             return "Sorry, I encountered an error. Please try again.";
         } catch (Exception e) {
             log.error("An unexpected error occurred", e);
