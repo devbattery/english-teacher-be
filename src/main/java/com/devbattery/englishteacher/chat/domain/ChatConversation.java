@@ -35,4 +35,8 @@ public class ChatConversation {
         this.messages.add(new ChatMessage(sender, text, LocalDateTime.now()));
     }
 
+    public void addMessage(String sender, String text, String imageUrl) {
+        this.messages.add(new ChatMessage(sender, text, LocalDateTime.now(), imageUrl));
+    }
+
 }

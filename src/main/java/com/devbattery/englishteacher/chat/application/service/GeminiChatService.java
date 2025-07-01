@@ -1,19 +1,27 @@
-// src/main/java/com/devbattery/englishteacher/chat/application/service/GeminiChatService.java
 package com.devbattery.englishteacher.chat.application.service;
 
 import com.devbattery.englishteacher.chat.domain.ChatConversation;
 import com.devbattery.englishteacher.chat.domain.ChatMessage;
 import com.devbattery.englishteacher.chat.domain.repository.ChatConversationRepository;
+import com.devbattery.englishteacher.common.config.FileStorageProperties;
 import com.devbattery.englishteacher.common.config.GeminiPromptProperties;
 import com.devbattery.englishteacher.user.application.service.UserReadService;
 import com.devbattery.englishteacher.user.domain.entity.User;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,10 +30,13 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Slf4j
@@ -34,15 +45,15 @@ public class GeminiChatService {
 
     private final UserReadService userReadService;
     private final GeminiPromptProperties promptProperties;
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+    private final ChatConversationRepository chatConversationRepository; // 리포지토리 주입
+    private final FileStorageProperties fileStorageProperties;
 
     @Value("${gemini.api.key}")
     private String apiKey;
 
     private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=%s";
-
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
-    private final ChatConversationRepository chatConversationRepository; // 리포지토리 주입
 
     /**
      * [신규] 사용자의 이전 대화 기록을 불러옵니다.
@@ -62,15 +73,13 @@ public class GeminiChatService {
 
     private ChatMessage createFirstMessageForLevel(String level, String userName) {
         String text = switch (level) {
-            case "beginner" ->
-                    String.format("Hello, %s!. Let's start slowly. What did you do today?", userName);
+            case "beginner" -> String.format("Hello, %s!. Let's start slowly. What did you do today?", userName);
             case "intermediate" ->
                     String.format("Hey %s, welcome! Ready to level up your English? What's on your mind?", userName);
             case "advanced" ->
                     String.format("Good to see you, %s. Let's delve into a stimulating discussion. What's our topic?",
                             userName);
-            case "ielts" ->
-                    "This is the IELTS test simulation. Could you tell me your full name, please?";
+            case "ielts" -> "This is the IELTS test simulation. Could you tell me your full name, please?";
             default -> String.format("Hi %s! Let's have a great conversation. What would you like to talk about?",
                     userName);
         };
@@ -79,36 +88,58 @@ public class GeminiChatService {
     }
 
     /**
-     * [수정] 첫 대화 시, AI의 첫인사 메시지도 함께 저장하도록 로직 변경
+     * [수정] 이미지 파일을 포함할 수 있도록 getChatResponse 메소드 시그니처 변경
+     * @param userId 사용자 ID
+     * @param level 선생님 레벨
+     * @param userMessage 사용자 메시지
+     * @param imageFile (Nullable) 사용자가 업로드한 이미지 파일
+     * @return AI의 응답
      */
     @Transactional
-    public String getChatResponse(Long userId, String level, String userMessage) {
-
-        // [신규] 이 대화가 새로 생성된 것인지 추적하기 위한 플래그
+    public String getChatResponse(Long userId, String level, String userMessage, @Nullable MultipartFile imageFile) {
         AtomicBoolean isFirstConversation = new AtomicBoolean(false);
 
-        // 1. 사용자 ID와 레벨로 기존 대화내역을 찾거나 새로 생성
         ChatConversation conversation = chatConversationRepository
                 .fetchByUserIdAndTeacherLevel(userId, level)
                 .orElseGet(() -> {
-                    isFirstConversation.set(true); // 새로 생성되었음을 표시
+                    isFirstConversation.set(true);
                     return new ChatConversation(userId, level);
                 });
 
-        // [핵심 로직] 만약 이 대화가 새로 생성된 것이라면, AI의 첫인사를 먼저 추가합니다.
         if (isFirstConversation.get()) {
             User user = userReadService.fetchById(userId);
             ChatMessage firstAiMessage = createFirstMessageForLevel(level, user.getName());
             conversation.addMessage(firstAiMessage.getSender(), firstAiMessage.getText());
         }
 
-        // 2. 현재 사용자의 메시지를 대화에 추가
-        conversation.addMessage("user", userMessage);
+        String imageUrl = null;
+        String imageBase64 = null;
+        String imageMimeType = null;
 
-        // 3. API 요청 본문 생성 (시스템 프롬프트 + 전체 대화 기록)
+        // [신규] 이미지 파일이 있으면 저장하고, Base64로 인코딩
+        if (imageFile != null && !imageFile.isEmpty()) {
+            try {
+                String savedFilename = storeFile(imageFile);
+                imageUrl = fileStorageProperties.getUploadUrlPrefix() + savedFilename;
+
+                imageBase64 = Base64.getEncoder().encodeToString(imageFile.getBytes());
+                imageMimeType = imageFile.getContentType();
+
+                // 이미지와 함께 메시지를 대화에 추가
+                conversation.addMessage("user", userMessage, imageUrl);
+            } catch (IOException e) {
+                log.error("Failed to store or encode image file", e);
+                return "Sorry, I had a problem processing your image. Please try again.";
+            }
+        } else {
+            // 이미지가 없으면 텍스트 메시지만 추가
+            conversation.addMessage("user", userMessage);
+        }
+
         String systemPrompt = createSystemPrompt(level);
-        // 이제 conversation.getMessages()에는 첫인사(필요시)와 사용자 메시지가 모두 포함됨
-        String requestBody = createRequestBodyWithHistory(systemPrompt, conversation.getMessages());
+        // [수정] createRequestBodyWithHistory 호출 시 이미지 관련 정보 전달
+        String requestBody = createRequestBodyWithHistory(systemPrompt, conversation.getMessages(), imageBase64,
+                imageMimeType);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -118,24 +149,37 @@ public class GeminiChatService {
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
             String aiResponseText = parseResponse(response.getBody());
-
-            // 4. AI의 응답을 대화에 추가
             conversation.addMessage("ai", aiResponseText);
-
-            // 5. 업데이트된 대화 내용을 DB에 저장
             chatConversationRepository.save(conversation);
-
             return aiResponseText;
-
         } catch (HttpClientErrorException e) {
             log.error("Gemini API Error - Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
-            // 에러 발생 시, 임시로 추가했던 사용자 메시지를 롤백하는 것이 좋습니다.
-            // 하지만 현재 구조상 conversation이 메모리에만 있으므로, DB에 저장되지 않아 자동 롤백됩니다.
             return "Sorry, I encountered an error. Please try again.";
         } catch (Exception e) {
             log.error("An unexpected error occurred", e);
             return "An unexpected error occurred. Please check the server logs.";
         }
+    }
+
+    /**
+     * [신규] MultipartFile을 서버에 저장하는 메소드
+     * @param file 업로드된 파일
+     * @return 서버에 저장된 파일 이름
+     * @throws IOException 파일 저장 실패 시
+     */
+    private String storeFile(MultipartFile file) throws IOException {
+        String originalFilename = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        // 보안을 위해 파일 이름에 UUID 추가하여 중복 및 잠재적 공격 방지
+        String fileExtension = "";
+        if (originalFilename.contains(".")) {
+            fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        String storedFilename = UUID.randomUUID().toString() + fileExtension;
+
+        Path targetLocation = Paths.get(fileStorageProperties.getUploadDir()).resolve(storedFilename);
+        Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
+        return storedFilename;
     }
 
     // ... createSystemPrompt, parseResponse 메소드는 기존과 동일 ...
@@ -169,27 +213,45 @@ public class GeminiChatService {
     }
 
     /**
-     * [수정] 전체 대화 기록을 포함하여 Gemini API 요청 본문을 생성합니다.
+     * [수정] Gemini API 요청 본문을 생성. 이미지(멀티모달) 데이터를 포함할 수 있도록 변경.
      * @param systemPrompt 시스템 지시사항
-     * @param messages     전체 메시지 목록
+     * @param messages 전체 메시지 목록
+     * @param imageBase64 (Nullable) Base64로 인코딩된 이미지 데이터
+     * @param imageMimeType (Nullable) 이미지의 MIME 타입 (e.g., "image/jpeg")
      * @return JSON 형식의 문자열
      */
-    private String createRequestBodyWithHistory(String systemPrompt, List<ChatMessage> messages) {
+    private String createRequestBodyWithHistory(String systemPrompt, List<ChatMessage> messages,
+                                                @Nullable String imageBase64, @Nullable String imageMimeType) {
         Map<String, Object> requestMap = new HashMap<>();
-
         List<Map<String, Object>> contents = new ArrayList<>();
 
-        // 1. 시스템 프롬프트(역할 부여)를 첫 번째 'user' 메시지로 추가
         contents.add(Map.of("role", "user", "parts", List.of(Map.of("text", systemPrompt))));
-        // 2. 모델이 역할을 인지했다는 가상의 응답 추가
-        contents.add(Map.of("role", "model", "parts",
-                List.of(Map.of("text", "Okay, I'm ready. I will act as the specified English teacher."))));
+        contents.add(Map.of("role", "model", "parts", List.of(Map.of("text", "Okay, I'm ready..."))));
 
-        // 3. 실제 대화 기록을 'user'와 'model' 역할에 맞게 추가
-        for (ChatMessage message : messages) {
-            // 프론트엔드에서 사용하는 'ai'를 API가 이해하는 'model'로 변환
+        for (int i = 0; i < messages.size(); i++) {
+            ChatMessage message = messages.get(i);
             String role = "ai".equalsIgnoreCase(message.getSender()) ? "model" : "user";
-            contents.add(Map.of("role", role, "parts", List.of(Map.of("text", message.getText()))));
+
+            // [핵심] 마지막 사용자 메시지이고, 이미지가 있는 경우 멀티모달 형식으로 구성
+            if (i == messages.size() - 1 && "user".equals(role) && imageBase64 != null) {
+                List<Map<String, Object>> parts = new ArrayList<>();
+                // 1. 이미지 데이터 추가
+                parts.add(Map.of(
+                        "inline_data", Map.of(
+                                "mime_type", imageMimeType,
+                                "data", imageBase64
+                        )
+                ));
+                // 2. 텍스트 데이터 추가
+                if (message.getText() != null && !message.getText().isBlank()) {
+                    parts.add(Map.of("text", message.getText()));
+                }
+                contents.add(Map.of("role", role, "parts", parts));
+            } else {
+                // 이미지가 없는 일반 메시지
+                // TODO: 나중에 대화 기록에 있는 이미지도 다시 보여주려면 이 부분 수정 필요
+                contents.add(Map.of("role", role, "parts", List.of(Map.of("text", message.getText()))));
+            }
         }
 
         requestMap.put("contents", contents);
@@ -198,7 +260,7 @@ public class GeminiChatService {
             return objectMapper.writeValueAsString(requestMap);
         } catch (Exception e) {
             log.error("Error creating request body for Gemini API", e);
-            throw new RuntimeException("Error creating request body for Gemini API", e);
+            throw new RuntimeException("Error creating request body", e);
         }
     }
 
