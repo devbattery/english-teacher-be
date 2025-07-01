@@ -53,6 +53,9 @@ public class GeminiChatService {
     @Value("${gemini.api.key}")
     private String apiKey;
 
+    @Value("${url.api}")
+    private String apiUrl;
+
     private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=%s";
 
     /**
@@ -116,28 +119,32 @@ public class GeminiChatService {
         String imageBase64 = null;
         String imageMimeType = null;
 
-        // [신규] 이미지 파일이 있으면 저장하고, Base64로 인코딩
         if (imageFile != null && !imageFile.isEmpty()) {
             try {
                 String savedFilename = storeFile(imageFile);
-                imageUrl = fileStorageProperties.getUploadUrlPrefix() + savedFilename;
+
+                // --- [핵심 수정] ---
+                // 기존 코드: 상대 경로 생성
+                // imageUrl = fileStorageProperties.getUploadUrlPrefix() + savedFilename;
+
+                // 수정된 코드: 절대 경로(Full URL) 생성
+                imageUrl = apiUrl + fileStorageProperties.getUploadUrlPrefix() + savedFilename;
+                // 결과 예: "https://englishteacher.store/uploads/some-uuid.jpg"
+                // -------------------
 
                 imageBase64 = Base64.getEncoder().encodeToString(imageFile.getBytes());
                 imageMimeType = imageFile.getContentType();
 
-                // 이미지와 함께 메시지를 대화에 추가
                 conversation.addMessage("user", userMessage, imageUrl);
             } catch (IOException e) {
                 log.error("Failed to store or encode image file", e);
                 return "Sorry, I had a problem processing your image. Please try again.";
             }
         } else {
-            // 이미지가 없으면 텍스트 메시지만 추가
             conversation.addMessage("user", userMessage);
         }
 
         String systemPrompt = createSystemPrompt(level);
-        // [수정] createRequestBodyWithHistory 호출 시 이미지 관련 정보 전달
         String requestBody = createRequestBodyWithHistory(systemPrompt, conversation.getMessages(), imageBase64,
                 imageMimeType);
 

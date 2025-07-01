@@ -13,6 +13,7 @@ public class AuthEndpoints {
             "/",
             "/css/**",
             "/images/**",
+            "/uploads/**",
             "/js/**",
             "/h2-console/**",
             // 소셜 로그인 관련
