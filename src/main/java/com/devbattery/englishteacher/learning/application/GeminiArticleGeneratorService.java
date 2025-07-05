@@ -25,7 +25,7 @@ public class GeminiArticleGeneratorService {
     @Value("${gemini.api.key}")
     private String apiKey;
 
-    private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=%s";
+    private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s";
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;

@@ -56,7 +56,7 @@ public class GeminiChatService {
     @Value("${url.api}")
     private String apiUrl;
 
-    private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=%s";
+    private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s";
 
     /**
      * [신규] 사용자의 이전 대화 기록을 불러옵니다.
