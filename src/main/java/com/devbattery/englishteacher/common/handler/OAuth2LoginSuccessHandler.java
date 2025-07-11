@@ -1,5 +1,6 @@
 package com.devbattery.englishteacher.common.handler;
 
+import com.devbattery.englishteacher.auth.domain.UserPrincipal;
 import com.devbattery.englishteacher.auth.application.service.AuthCodeService;
 import com.devbattery.englishteacher.auth.application.service.RefreshTokenService;
 import com.devbattery.englishteacher.auth.presentation.dto.AuthTokens;
@@ -34,8 +35,9 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                                         Authentication authentication) throws IOException, ServletException {
         log.info("OAuth2 로그인 성공. 임시 인증 코드 생성 시작.");
 
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-        String email = oAuth2User.getAttribute("email");
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        String email = userPrincipal.getEmail();
+        boolean isNewUser = userPrincipal.isNewUser();
 
         // 1. Access/Refresh Token 생성
         String accessToken = jwtTokenProvider.generateAccessToken(authentication);
@@ -46,7 +48,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         log.info("Redis에 Refresh Token 저장 완료.");
 
         // 3. Access/Refresh Token을 임시 저장하고 일회용 인증 코드 생성
-        AuthTokens authTokens = new AuthTokens(accessToken, refreshToken);
+        AuthTokens authTokens = new AuthTokens(accessToken, refreshToken, isNewUser);
         String authorizationCode = authCodeService.generateAndStoreTokens(authTokens);
         log.info("임시 인증 코드 생성 완료: {}", authorizationCode);
 

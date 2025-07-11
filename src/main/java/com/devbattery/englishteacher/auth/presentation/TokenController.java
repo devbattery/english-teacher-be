@@ -53,8 +53,11 @@ public class TokenController {
         int cookieMaxAge = (int) (refreshTokenExpireTime / 1000);
         CookieUtil.addCookie(response, "refresh_token", tokens.getRefreshToken(), cookieMaxAge);
 
-        // Access Token은 응답 바디로 전달
-        return ResponseEntity.ok(Map.of("accessToken", tokens.getAccessToken()));
+        // Access Token과 isNewUser는 응답 바디로 전달
+        return ResponseEntity.ok(Map.of(
+                "accessToken", tokens.getAccessToken(),
+                "isNewUser", tokens.getIsNewUser()
+        ));
     }
 
     @PostMapping("/api/auth/refresh")

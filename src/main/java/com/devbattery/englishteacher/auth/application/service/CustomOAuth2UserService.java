@@ -40,30 +40,39 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         OAuth2Attributes attributes = OAuth2Attributes.of(registrationId, userNameAttributeName,
                 oAuth2User.getAttributes());
-        User user = login(attributes);
+        Map<String, Object> loginResult = login(attributes);
+        User user = (User) loginResult.get("user");
+        boolean isNewUser = (boolean) loginResult.get("isNewUser");
 
         // DefaultOAuth2User 대신 UserPrincipal을 생성하여 반환
         return new UserPrincipal(
                 user.getId(),
                 user.getEmail(),
                 Collections.singleton(new SimpleGrantedAuthority(user.getRoleKey())),
-                oAuth2User.getAttributes()
+                oAuth2User.getAttributes(),
+                isNewUser
         );
     }
 
-    private User login(OAuth2Attributes attributes) {
+    private Map<String, Object> login(OAuth2Attributes attributes) {
         User user;
+        boolean isNewUser;
         try {
             user = userReadService.fetchByEmail(attributes.getEmail());
             userWriteService.update(user);
+            isNewUser = false;
             log.info("{} 유저 정보 업데이트 완료.", attributes.getName());
         } catch (UsernameNotFoundException e) {
             user = UserConvertor.attributesToUser(attributes);
             userWriteService.save(user);
+            isNewUser = true;
             log.info("{} 유저 정보 저장 완료.", attributes.getName());
         }
 
-        return user;
+        Map<String, Object> result = new HashMap<>();
+        result.put("user", user);
+        result.put("isNewUser", isNewUser);
+        return result;
     }
 
 }
