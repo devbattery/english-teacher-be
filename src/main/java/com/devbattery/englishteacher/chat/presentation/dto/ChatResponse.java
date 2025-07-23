@@ -1,5 +1,5 @@
 package com.devbattery.englishteacher.chat.presentation.dto;
 
-public record ChatResponse(String reply) {
+public record ChatResponse(String reply, String conversationId) {
 
 }
