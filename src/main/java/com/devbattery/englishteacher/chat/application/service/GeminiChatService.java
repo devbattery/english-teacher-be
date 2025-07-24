@@ -63,7 +63,7 @@ public class GeminiChatService {
     private static final int MAX_CHAT_ROOMS_PER_LEVEL = 10;
 
     /**
-     * [신규] 새로운 빈 채팅방을 생성합니다.
+     * [수정] 새로운 채팅방을 생성할 때, 첫 AI 인사말을 포함하여 생성합니다.
      * @param userId 사용자 ID
      * @param level  생성할 선생님 레벨
      * @return 생성된 채팅방의 요약 정보 DTO
@@ -75,12 +75,19 @@ public class GeminiChatService {
             throw new IllegalStateException("You have reached the maximum number of chat rooms for the " + level + " level.");
         }
 
-        // 메시지가 없는 빈 대화 객체 생성
+        // [핵심 수정] 빈 대화가 아닌, 첫 인사말이 포함된 대화 객체를 생성합니다.
         ChatConversation conversation = new ChatConversation(userId, level);
 
-        // Gemini API 호출 없이, 빈 상태로 즉시 저장
+        // 사용자 정보를 가져와서 인사말에 이름을 포함시킵니다.
+        User user = userReadService.fetchById(userId);
+        ChatMessage firstAiMessage = createFirstMessageForLevel(level, user.getName());
+
+        // 생성된 인사말을 대화 목록에 추가합니다.
+        conversation.addMessage(firstAiMessage.getSender(), firstAiMessage.getText());
+
+        // 첫 메시지가 포함된 상태로 대화를 저장합니다.
         chatConversationRepository.save(conversation);
-        log.info("New empty chat room created with id '{}' for user {}", conversation.getId(), userId);
+        log.info("New chat room with greeting created. ID: '{}' for user {}", conversation.getId(), userId);
 
         // 프론트엔드에 전달할 요약 정보 DTO로 변환하여 반환
         return ChatRoomSummaryResponse.from(conversation);
@@ -111,8 +118,8 @@ public class GeminiChatService {
     }
 
     /**
-     * [수정] 채팅 응답을 가져옵니다. 이제 이 메소드는 채팅방을 생성하지 않으며, conversationId는 필수입니다.
-     * 첫 메시지일 경우, AI 인사말을 추가하는 로직이 포함됩니다.
+     * [수정] 채팅 응답 로직. 이제 첫 메시지 생성 책임이 없습니다.
+     * (단, 방어 코드로 남겨두는 것은 좋습니다.)
      */
     @Transactional
     public ChatResponse getChatResponse(Long userId, String level, String conversationId, String userMessage, @Nullable MultipartFile imageFile) {
@@ -128,14 +135,15 @@ public class GeminiChatService {
             throw new SecurityException("User does not have permission to access this chat room.");
         }
 
-        // 이 방의 첫 메시지인지 확인하여 AI 인사말 추가
+        // 이 코드는 이제 정상적인 흐름에서는 실행되지 않지만,
+        // 혹시 모를 비어있는 방 데이터에 대한 방어 코드로써 유용합니다.
         if (conversation.getMessages().isEmpty()) {
             User user = userReadService.fetchById(userId);
             ChatMessage firstAiMessage = createFirstMessageForLevel(level, user.getName());
             conversation.addMessage(firstAiMessage.getSender(), firstAiMessage.getText());
         }
 
-        // --- 이하 이미지 처리 및 사용자 메시지 추가, Gemini API 호출 로직은 기존과 동일 ---
+        // --- 이하 로직은 변경 없음 ---
         String imageUrl = null;
         String imageBase64 = null;
         String imageMimeType = null;
