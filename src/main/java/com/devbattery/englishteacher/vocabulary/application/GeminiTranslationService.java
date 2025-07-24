@@ -19,7 +19,7 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 public class GeminiTranslationService {
 
-    @Value("${gemini.api.key}")
+    @Value("${gemini.api.key-translation}")
     private String apiKey;
     private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s";
     private final RestTemplate restTemplate;

@@ -22,7 +22,7 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class GeminiArticleGeneratorService {
 
-    @Value("${gemini.api.key}")
+    @Value("${gemini.api.key-article}")
     private String apiKey;
 
     private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s";

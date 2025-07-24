@@ -53,7 +53,7 @@ public class GeminiChatService {
     private final ChatConversationRepository chatConversationRepository;
     private final FileStorageProperties fileStorageProperties;
 
-    @Value("${gemini.api.key}")
+    @Value("${gemini.api.key-chat}")
     private String apiKey;
 
     @Value("${url.api}")
