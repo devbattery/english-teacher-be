@@ -60,100 +60,89 @@ public class GeminiChatService {
     private String apiUrl;
 
     private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s";
-    private static final int MAX_CHAT_ROOMS_PER_LEVEL = 10; // 레벨당 채팅방 생성 제한
+    private static final int MAX_CHAT_ROOMS_PER_LEVEL = 10;
 
     /**
-     * [신규] 특정 레벨에 속한 사용자의 모든 채팅방 목록을 조회합니다.
+     * [신규] 새로운 빈 채팅방을 생성합니다.
      * @param userId 사용자 ID
-     * @param level  선생님 레벨
-     * @return 채팅방 요약 정보 리스트 (최신순 정렬)
+     * @param level  생성할 선생님 레벨
+     * @return 생성된 채팅방의 요약 정보 DTO
      */
+    @Transactional
+    public ChatRoomSummaryResponse createChatRoom(Long userId, String level) {
+        long roomCount = chatConversationRepository.countByUserIdAndTeacherLevel(userId, level);
+        if (roomCount >= MAX_CHAT_ROOMS_PER_LEVEL) {
+            throw new IllegalStateException("You have reached the maximum number of chat rooms for the " + level + " level.");
+        }
+
+        // 메시지가 없는 빈 대화 객체 생성
+        ChatConversation conversation = new ChatConversation(userId, level);
+
+        // Gemini API 호출 없이, 빈 상태로 즉시 저장
+        chatConversationRepository.save(conversation);
+        log.info("New empty chat room created with id '{}' for user {}", conversation.getId(), userId);
+
+        // 프론트엔드에 전달할 요약 정보 DTO로 변환하여 반환
+        return ChatRoomSummaryResponse.from(conversation);
+    }
+
     @Transactional(readOnly = true)
     public List<ChatRoomSummaryResponse> getConversationListByLevel(Long userId, String level) {
         return chatConversationRepository.findAllByUserIdAndTeacherLevel(userId, level)
                 .stream()
-                // 최근에 대화한 방이 위로 오도록 정렬
-                .sorted(Comparator.comparing(ChatConversation::getLastModifiedAt).reversed())
+                .sorted(Comparator.comparing(
+                        ChatConversation::getLastModifiedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ).reversed())
                 .map(ChatRoomSummaryResponse::from)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * [수정] 특정 채팅방의 대화 기록을 조회합니다.
-     * @param userId         사용자 ID (소유권 확인용)
-     * @param conversationId 조회할 채팅방의 고유 ID
-     * @return 메시지 목록
-     */
     @Transactional(readOnly = true)
     public List<ChatMessage> getConversationHistory(Long userId, String conversationId) {
         ChatConversation conversation = chatConversationRepository.findById(conversationId)
                 .orElseThrow(() -> new IllegalArgumentException("Chat room not found with id: " + conversationId));
 
-        // 해당 채팅방이 요청한 사용자의 소유인지 확인 (보안)
         if (!conversation.getUserId().equals(userId)) {
             throw new SecurityException("User does not have permission to access this chat room.");
-        }
-
-        // 채팅방이 비어있다면, 첫 AI 메시지를 생성해서 보여줍니다.
-        if (conversation.getMessages().isEmpty()) {
-            User user = userReadService.fetchById(userId);
-            ChatMessage firstMessage = createFirstMessageForLevel(conversation.getTeacherLevel(), user.getName());
-            return List.of(firstMessage);
         }
 
         return conversation.getMessages();
     }
 
     /**
-     * [수정] 채팅 응답을 생성하고 대화를 저장합니다.
-     * conversationId가 없으면 새 채팅방을 생성하고, 있으면 기존 채팅방에 메시지를 추가합니다.
-     *
-     * @param userId         사용자 ID
-     * @param level          선생님 레벨 (새 채팅방 생성 시 필요)
-     * @param conversationId (Nullable) 기존 채팅방의 ID
-     * @param userMessage    사용자 메시지
-     * @param imageFile      (Nullable) 사용자가 업로드한 이미지 파일
-     * @return AI의 응답과 채팅방 ID가 포함된 ChatResponse 객체
+     * [수정] 채팅 응답을 가져옵니다. 이제 이 메소드는 채팅방을 생성하지 않으며, conversationId는 필수입니다.
+     * 첫 메시지일 경우, AI 인사말을 추가하는 로직이 포함됩니다.
      */
     @Transactional
-    public ChatResponse getChatResponse(Long userId, String level, @Nullable String conversationId, String userMessage, @Nullable MultipartFile imageFile) {
-        ChatConversation conversation;
-        boolean isFirstMessageInRoom = false;
+    public ChatResponse getChatResponse(Long userId, String level, String conversationId, String userMessage, @Nullable MultipartFile imageFile) {
 
-        // 1. 대화 객체 가져오기 (기존 또는 신규)
         if (conversationId == null || conversationId.isBlank()) {
-            // [신규 채팅방 생성 로직]
-            long roomCount = chatConversationRepository.countByUserIdAndTeacherLevel(userId, level);
-            if (roomCount >= MAX_CHAT_ROOMS_PER_LEVEL) {
-                throw new IllegalStateException("You have reached the maximum number of " + MAX_CHAT_ROOMS_PER_LEVEL + " chat rooms for the " + level + " level.");
-            }
-            conversation = new ChatConversation(userId, level);
-            isFirstMessageInRoom = true;
-        } else {
-            // [기존 채팅방 조회 로직]
-            conversation = chatConversationRepository.findById(conversationId)
-                    .orElseThrow(() -> new IllegalArgumentException("Chat room not found with id: " + conversationId));
-
-            if (!conversation.getUserId().equals(userId)) {
-                throw new SecurityException("User does not have permission to access this chat room.");
-            }
+            throw new IllegalArgumentException("conversationId cannot be null or empty for sending a message.");
         }
 
-        // 2. 첫 AI 인사 메시지 추가 (필요 시)
-        if (isFirstMessageInRoom || conversation.getMessages().isEmpty()) {
+        ChatConversation conversation = chatConversationRepository.findById(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException("Chat room not found with id: " + conversationId));
+
+        if (!conversation.getUserId().equals(userId)) {
+            throw new SecurityException("User does not have permission to access this chat room.");
+        }
+
+        // 이 방의 첫 메시지인지 확인하여 AI 인사말 추가
+        if (conversation.getMessages().isEmpty()) {
             User user = userReadService.fetchById(userId);
             ChatMessage firstAiMessage = createFirstMessageForLevel(level, user.getName());
             conversation.addMessage(firstAiMessage.getSender(), firstAiMessage.getText());
         }
 
-        // 3. 사용자 메시지 추가 (이미지 포함)
+        // --- 이하 이미지 처리 및 사용자 메시지 추가, Gemini API 호출 로직은 기존과 동일 ---
+        String imageUrl = null;
         String imageBase64 = null;
         String imageMimeType = null;
-
         if (imageFile != null && !imageFile.isEmpty()) {
             try {
                 String savedFilename = storeFile(imageFile);
-                String imageUrl = apiUrl + fileStorageProperties.getUploadUrlPrefix() + savedFilename;
+                imageUrl = apiUrl + fileStorageProperties.getUploadUrlPrefix() + savedFilename;
                 imageBase64 = Base64.getEncoder().encodeToString(imageFile.getBytes());
                 imageMimeType = imageFile.getContentType();
                 conversation.addMessage("user", userMessage, imageUrl);
@@ -165,7 +154,6 @@ public class GeminiChatService {
             conversation.addMessage("user", userMessage);
         }
 
-        // 4. Gemini API 요청 및 응답 처리
         String systemPrompt = createSystemPrompt(level);
         String requestBody = createRequestBodyWithHistory(systemPrompt, conversation.getMessages(), imageBase64, imageMimeType);
 
@@ -177,14 +165,9 @@ public class GeminiChatService {
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(fullApiUrl, entity, String.class);
             String aiResponseText = parseResponse(response.getBody());
-
-            // 5. AI 응답 메시지 추가 및 대화 저장
             conversation.addMessage("ai", aiResponseText);
             chatConversationRepository.save(conversation);
-
-            // 6. 클라이언트에 응답 전달
             return new ChatResponse(aiResponseText, conversation.getId());
-
         } catch (HttpClientErrorException e) {
             log.error("Gemini API Error - Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
             throw new RuntimeException("Sorry, I encountered an error with the AI service. Please try again.");
@@ -194,11 +177,6 @@ public class GeminiChatService {
         }
     }
 
-    /**
-     * [수정] 특정 채팅방을 삭제합니다.
-     * @param userId         사용자 ID (소유권 확인용)
-     * @param conversationId 삭제할 채팅방 ID
-     */
     @Transactional
     public void deleteConversation(Long userId, String conversationId) {
         ChatConversation conversation = chatConversationRepository.findById(conversationId)
@@ -211,8 +189,6 @@ public class GeminiChatService {
         chatConversationRepository.deleteById(conversationId);
         log.info("Chat room with id '{}' for user {} has been deleted.", conversationId, userId);
     }
-
-    // --- 아래는 변경되지 않은 private 헬퍼 메소드들 ---
 
     private ChatMessage createFirstMessageForLevel(String level, String userName) {
         String text = switch (level) {

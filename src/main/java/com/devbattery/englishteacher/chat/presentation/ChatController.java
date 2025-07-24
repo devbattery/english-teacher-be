@@ -6,6 +6,7 @@ import com.devbattery.englishteacher.chat.domain.ChatMessage;
 import com.devbattery.englishteacher.chat.presentation.dto.ChatRequest;
 import com.devbattery.englishteacher.chat.presentation.dto.ChatResponse;
 import com.devbattery.englishteacher.chat.presentation.dto.ChatRoomSummaryResponse;
+import com.devbattery.englishteacher.chat.presentation.dto.CreateChatRoomRequest;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +31,20 @@ public class ChatController {
     private final GeminiChatService geminiChatService;
     // 이제 Controller에서는 Repository를 직접 사용할 필요가 없습니다.
     // private final ChatConversationRepository chatConversationRepository;
+
+    /**
+     * [신규] 새로운 빈 채팅방을 생성하는 엔드포인트
+     * @param request 생성할 레벨 정보
+     * @return 생성된 채팅방의 요약 정보
+     */
+    @PostMapping("/api/chat/rooms")
+    public ResponseEntity<ChatRoomSummaryResponse> createChatRoom(
+            @RequestBody CreateChatRoomRequest request,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        Long userId = userPrincipal.getId();
+        ChatRoomSummaryResponse newRoom = geminiChatService.createChatRoom(userId, request.level());
+        return ResponseEntity.ok(newRoom);
+    }
 
     /**
      * [수정] 채팅 메시지 전송 (기존 또는 신규 채팅방)
