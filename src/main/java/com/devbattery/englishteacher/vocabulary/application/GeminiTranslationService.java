@@ -21,15 +21,18 @@ public class GeminiTranslationService {
 
     @Value("${gemini.api.key-translation}")
     private String apiKey;
-    private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s";
+
+    @Value("${gemini.api.template}")
+    private String apiTemplate;
+
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
     public String translateToKorean(String englishText) {
         // Gemini에게 번역만 하도록 명확하게 지시하는 프롬프트
         String prompt = String.format(
-            "Translate the following English phrase to Korean. Provide ONLY the Korean translation and nothing else. Phrase: \"%s\"",
-            englishText
+                "Translate the following English phrase to Korean. Provide ONLY the Korean translation and nothing else. Phrase: \"%s\"",
+                englishText
         );
 
         Map<String, Object> part = Map.of("text", prompt);
@@ -41,10 +44,10 @@ public class GeminiTranslationService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
-            String apiUrl = String.format(API_URL_TEMPLATE, apiKey);
+            String apiUrl = String.format(apiTemplate, apiKey);
 
             ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
-            
+
             return parseTranslationFromResponse(response.getBody());
 
         } catch (Exception e) {
@@ -56,11 +59,13 @@ public class GeminiTranslationService {
     private String parseTranslationFromResponse(String jsonResponse) {
         try {
             JsonNode root = objectMapper.readTree(jsonResponse);
-            String translatedText = root.path("candidates").get(0).path("content").path("parts").get(0).path("text").asText();
+            String translatedText = root.path("candidates").get(0).path("content").path("parts").get(0).path("text")
+                    .asText();
             return translatedText.trim();
         } catch (Exception e) {
             log.error("Error parsing Gemini translation response: {}", jsonResponse, e);
             return "번역 파싱 오류";
         }
     }
+
 }

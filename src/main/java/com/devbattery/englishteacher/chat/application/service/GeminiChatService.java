@@ -59,7 +59,9 @@ public class GeminiChatService {
     @Value("${url.api}")
     private String apiUrl;
 
-    private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s";
+    @Value("${gemini.api.template}")
+    private String apiTemplate;
+
     private static final int MAX_CHAT_ROOMS_PER_LEVEL = 10;
 
     /**
@@ -168,7 +170,7 @@ public class GeminiChatService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
-        String fullApiUrl = String.format(API_URL_TEMPLATE, apiKey);
+        String fullApiUrl = String.format(apiTemplate, apiKey);
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(fullApiUrl, entity, String.class);
@@ -200,13 +202,13 @@ public class GeminiChatService {
 
     private ChatMessage createFirstMessageForLevel(String level, String userName) {
         String text = switch (level) {
-            case "beginner" -> String.format("Hello, %s!. Let's start slowly. What did you do today?", userName);
-            case "intermediate" ->
-                    String.format("Hey %s, welcome! Ready to level up your English? What's on your mind?", userName);
-            case "advanced" ->
-                    String.format("Good to see you, %s. Let's delve into a stimulating discussion. What's our topic?",
+            case "elementary" -> String.format("Hello, %s! I'm your English friend. What did you do today?", userName);
+            case "highschool" ->
+                    String.format("Hi %s. Welcome to your academic English session. What topic should we start with?", userName);
+            case "native" ->
+                    String.format("It's a pleasure to connect, %s. I'm ready for a deep and insightful conversation. What's on your mind?",
                             userName);
-            case "ielts" -> "This is the IELTS test simulation. Could you tell me your full name, please?";
+            case "toeic" -> String.format("Welcome, %s. This is your TOEIC preparation session. Let's begin. How may I help you today?", userName);
             default -> String.format("Hi %s! Let's have a great conversation. What would you like to talk about?",
                     userName);
         };

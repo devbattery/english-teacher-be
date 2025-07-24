@@ -25,7 +25,8 @@ public class GeminiArticleGeneratorService {
     @Value("${gemini.api.key-article}")
     private String apiKey;
 
-    private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s";
+    @Value("${gemini.api.template}")
+    private String apiTemplate;
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
@@ -41,7 +42,7 @@ public class GeminiArticleGeneratorService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
-        String apiUrl = String.format(API_URL_TEMPLATE, apiKey);
+        String apiUrl = String.format(apiTemplate, apiKey);
 
         try {
             log.info("Requesting learning article from Gemini for level: {}", level);
