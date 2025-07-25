@@ -29,7 +29,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // ★★★ AuthEndpoints 상수를 사용하여 제외할 URL인지 확인합니다. ★★★
         boolean isExcluded = Arrays.stream(AuthEndpoints.PERMIT_ALL_PATTERNS)
                 .anyMatch(pattern -> pathMatcher.match(pattern, path));
 
@@ -52,6 +51,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
+
         return null;
     }
 

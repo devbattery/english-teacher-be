@@ -30,11 +30,6 @@ public class RedisConfig {
         return lettuceConnectionFactory;
     }
 
-    /**
-     * 기존 redisTemplate<String, String>을 대체합니다.
-     * 이제 이 RedisTemplate은 key로 String을, value로 Object를 처리할 수 있습니다.
-     * 이를 통해 RefreshToken(String)과 AuthTokens(Object)를 모두 저장할 수 있습니다.
-     */
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();

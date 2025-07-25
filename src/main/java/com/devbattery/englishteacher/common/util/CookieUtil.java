@@ -16,7 +16,7 @@ public class CookieUtil {
                 .path("/")
                 .maxAge(maxAge)
                 .httpOnly(true)
-//                .secure(true) // https 환경
+                .secure(true) // https 환경
                 .sameSite("Strict")
                 .build();
 

@@ -5,9 +5,6 @@ public class AuthEndpoints {
     private AuthEndpoints() {
     }
 
-    /**
-     * Spring Security 및 JWT 필터에서 인증을 요구하지 않을 엔드포인트 목록입니다.
-     */
     public static final String[] PERMIT_ALL_PATTERNS = {
             // 정적 리소스
             "/",

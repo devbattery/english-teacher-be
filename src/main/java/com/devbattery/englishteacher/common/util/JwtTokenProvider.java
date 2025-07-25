@@ -1,6 +1,7 @@
 package com.devbattery.englishteacher.common.util;
 
 import com.devbattery.englishteacher.auth.domain.UserPrincipal;
+import com.devbattery.englishteacher.common.exception.TokenUnauthorizedException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -27,7 +28,7 @@ import org.springframework.stereotype.Component;
 public class JwtTokenProvider {
 
     private final String AUTH_KEY = "auth";
-    private final String ID_KEY = "id"; // ID 클레임의 키를 상수로 정의
+    private final String ID_KEY = "id";
 
     private final Key key;
     private final long accessTokenExpireTime;
@@ -55,7 +56,6 @@ public class JwtTokenProvider {
     }
 
     private String generateToken(Authentication authentication, long expireTime) {
-        // ★★★ 1. Authentication 객체에서 UserPrincipal을 가져옵니다. ★★★
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
         String authorities = userPrincipal.getAuthorities().stream()
@@ -66,9 +66,9 @@ public class JwtTokenProvider {
         Date validity = new Date(now + expireTime);
 
         return Jwts.builder()
-                .setSubject(userPrincipal.getUsername()) // 이메일
-                .claim(AUTH_KEY, authorities)         // 권한
-                .claim(ID_KEY, userPrincipal.getId()) // ★★★ 2. id 클레임을 추가합니다! ★★★
+                .setSubject(userPrincipal.getUsername())
+                .claim(AUTH_KEY, authorities)
+                .claim(ID_KEY, userPrincipal.getId())
                 .setIssuedAt(new Date())
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -78,7 +78,7 @@ public class JwtTokenProvider {
     public Authentication getAuthentication(String accessToken) {
         Claims claims = parseClaims(accessToken);
         if (claims.get(AUTH_KEY) == null) {
-            throw new RuntimeException("권한 정보가 없는 토큰입니다.");
+            throw new TokenUnauthorizedException();
         }
 
         Collection<? extends GrantedAuthority> authorities =
@@ -86,9 +86,8 @@ public class JwtTokenProvider {
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
 
-        // ★★★ 3. 이제 claims.get("id", Long.class)는 절대 null이 아닙니다. ★★★
         UserPrincipal principal = new UserPrincipal(
-                claims.get(ID_KEY, Long.class), // 상수를 사용하도록 변경
+                claims.get(ID_KEY, Long.class),
                 claims.getSubject(),
                 authorities
         );
