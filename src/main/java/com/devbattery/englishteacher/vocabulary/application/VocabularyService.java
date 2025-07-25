@@ -1,10 +1,8 @@
 package com.devbattery.englishteacher.vocabulary.application;
 
-// import com.devbattery.englishteacher.user.domain.User; <-- User Entity 직접 참조 불필요
-// import com.devbattery.englishteacher.user.domain.repository.UserRepository; <-- User Repository 불필요
-
-import com.devbattery.englishteacher.vocabulary.domain.UserVocabulary;
-import com.devbattery.englishteacher.vocabulary.infra.persistence.mybatis.VocabularyMapper;
+import com.devbattery.englishteacher.common.exception.UserUnauthorizedException;
+import com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary;
+import com.devbattery.englishteacher.vocabulary.domain.repository.VocabularyRepository;
 import com.devbattery.englishteacher.vocabulary.presentation.dto.VocabSaveRequest;
 import java.nio.file.AccessDeniedException;
 import java.util.List;
@@ -16,39 +14,29 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class VocabularyService {
 
-    // JPA Repository 대신 MyBatis Mapper를 주입받습니다.
-    private final VocabularyMapper vocabularyMapper;
+    private final VocabularyRepository vocabularyRepository;
     private final GeminiTranslationService translationService;
 
     @Transactional(readOnly = true)
-    public List<UserVocabulary> getMyVocabulary(Long userId) {
-        return vocabularyMapper.findByUserId(userId);
+    public List<UserVocabulary> fetchMyVocabulary(Long userId) {
+        return vocabularyRepository.fetchByUserId(userId);
     }
 
     @Transactional
     public UserVocabulary saveNewWord(VocabSaveRequest request, Long userId) {
-        // User 객체를 찾을 필요 없이, userId만 있으면 됩니다.
-
-        // Gemini를 통해 번역
         String koreanMeaning = translationService.translateToKorean(request.getExpression());
-
-        // UserVocabulary 객체 생성
         UserVocabulary newVocab = new UserVocabulary(userId, request.getExpression(), koreanMeaning);
-
-        // Mapper를 통해 DB에 저장
-        vocabularyMapper.save(newVocab);
-
-        // save 메소드 호출 후 newVocab 객체에는 DB에서 생성된 id가 채워져 있습니다.
+        vocabularyRepository.save(newVocab);
         return newVocab;
     }
 
     @Transactional
     public void deleteWord(Long wordId, Long userId) throws AccessDeniedException {
-        // 본인의 단어인지 확인
-        if (!vocabularyMapper.existsByIdAndUserId(wordId, userId)) {
-            throw new AccessDeniedException("You do not have permission to delete this word.");
+        if (!vocabularyRepository.existsByIdAndUserId(wordId, userId)) {
+            throw new UserUnauthorizedException();
         }
-        vocabularyMapper.deleteById(wordId);
+
+        vocabularyRepository.deleteById(wordId);
     }
 
 }

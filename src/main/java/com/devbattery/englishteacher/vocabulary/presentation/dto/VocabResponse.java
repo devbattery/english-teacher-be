@@ -1,6 +1,6 @@
 package com.devbattery.englishteacher.vocabulary.presentation.dto;
 
-import com.devbattery.englishteacher.vocabulary.domain.UserVocabulary;
+import com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

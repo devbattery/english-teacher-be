@@ -1,14 +1,12 @@
-package com.devbattery.englishteacher.vocabulary.infra.persistence.mybatis;
+package com.devbattery.englishteacher.vocabulary.domain.repository;
 
 import com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary;
 import java.util.List;
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-@Mapper // Spring이 이 인터페이스를 MyBatis 매퍼 빈으로 등록합니다.
-public interface VocabularyMapper {
+public interface VocabularyRepository {
 
-    List<UserVocabulary> findByUserId(Long userId);
+    List<UserVocabulary> fetchByUserId(Long userId);
 
     void save(UserVocabulary vocabulary);
 

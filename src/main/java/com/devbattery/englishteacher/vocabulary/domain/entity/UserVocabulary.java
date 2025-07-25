@@ -1,4 +1,4 @@
-package com.devbattery.englishteacher.vocabulary.domain;
+package com.devbattery.englishteacher.vocabulary.domain.entity;
 
 import java.time.LocalDateTime;
 import lombok.AccessLevel;

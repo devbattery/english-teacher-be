@@ -29,7 +29,6 @@ public class GeminiTranslationService {
     private final ObjectMapper objectMapper;
 
     public String translateToKorean(String englishText) {
-        // Gemini에게 번역만 하도록 명확하게 지시하는 프롬프트
         String prompt = String.format(
                 "Translate the following English phrase to Korean. Provide ONLY the Korean translation and nothing else. Phrase: \"%s\"",
                 englishText
@@ -45,13 +44,10 @@ public class GeminiTranslationService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
             String apiUrl = String.format(apiTemplate, apiKey);
-
             ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
-
             return parseTranslationFromResponse(response.getBody());
-
         } catch (Exception e) {
-            log.error("Error translating text with Gemini: {}", englishText, e);
+            log.error("{} 텍스트의 번역 실패", englishText, e);
             return "번역 실패"; // 실패 시 기본값
         }
     }
@@ -63,7 +59,7 @@ public class GeminiTranslationService {
                     .asText();
             return translatedText.trim();
         } catch (Exception e) {
-            log.error("Error parsing Gemini translation response: {}", jsonResponse, e);
+            log.error("{} 응답의 파싱 오류", jsonResponse, e);
             return "번역 파싱 오류";
         }
     }
