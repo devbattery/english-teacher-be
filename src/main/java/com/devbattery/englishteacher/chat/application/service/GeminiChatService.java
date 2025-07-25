@@ -65,10 +65,7 @@ public class GeminiChatService {
     private static final int MAX_CHAT_ROOMS_PER_LEVEL = 10;
 
     /**
-     * [수정] 새로운 채팅방을 생성할 때, 첫 AI 인사말을 포함하여 생성합니다.
-     * @param userId 사용자 ID
-     * @param level  생성할 선생님 레벨
-     * @return 생성된 채팅방의 요약 정보 DTO
+     * 새로운 채팅방을 생성할 때, 첫 AI 인사말을 포함하여 생성
      */
     @Transactional
     public ChatRoomSummaryResponse createChatRoom(Long userId, String level) {
@@ -78,21 +75,13 @@ public class GeminiChatService {
                     "You have reached the maximum number of chat rooms for the " + level + " level.");
         }
 
-        // [핵심 수정] 빈 대화가 아닌, 첫 인사말이 포함된 대화 객체를 생성합니다.
-        ChatConversation conversation = new ChatConversation(userId, level);
-
-        // 사용자 정보를 가져와서 인사말에 이름을 포함시킵니다.
         User user = userReadService.fetchById(userId);
         ChatMessage firstAiMessage = createFirstMessageForLevel(level, user.getName());
 
-        // 생성된 인사말을 대화 목록에 추가합니다.
+        ChatConversation conversation = new ChatConversation(userId, level);
         conversation.addMessage(firstAiMessage.getSender(), firstAiMessage.getText());
-
-        // 첫 메시지가 포함된 상태로 대화를 저장합니다.
         chatConversationRepository.save(conversation);
-        log.info("New chat room with greeting created. ID: '{}' for user {}", conversation.getId(), userId);
 
-        // 프론트엔드에 전달할 요약 정보 DTO로 변환하여 반환
         return ChatRoomSummaryResponse.from(conversation);
     }
 
