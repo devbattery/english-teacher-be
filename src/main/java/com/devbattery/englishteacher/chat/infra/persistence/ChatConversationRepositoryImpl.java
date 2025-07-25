@@ -38,4 +38,5 @@ public class ChatConversationRepositoryImpl implements ChatConversationRepositor
     public void deleteById(String conversationId) {
         mongoRepository.deleteById(conversationId);
     }
+
 }

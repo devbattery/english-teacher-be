@@ -74,7 +74,8 @@ public class GeminiChatService {
     public ChatRoomSummaryResponse createChatRoom(Long userId, String level) {
         long roomCount = chatConversationRepository.countByUserIdAndTeacherLevel(userId, level);
         if (roomCount >= MAX_CHAT_ROOMS_PER_LEVEL) {
-            throw new IllegalStateException("You have reached the maximum number of chat rooms for the " + level + " level.");
+            throw new IllegalStateException(
+                    "You have reached the maximum number of chat rooms for the " + level + " level.");
         }
 
         // [핵심 수정] 빈 대화가 아닌, 첫 인사말이 포함된 대화 객체를 생성합니다.
@@ -124,7 +125,8 @@ public class GeminiChatService {
      * (단, 방어 코드로 남겨두는 것은 좋습니다.)
      */
     @Transactional
-    public ChatResponse getChatResponse(Long userId, String level, String conversationId, String userMessage, @Nullable MultipartFile imageFile) {
+    public ChatResponse getChatResponse(Long userId, String level, String conversationId, String userMessage,
+                                        @Nullable MultipartFile imageFile) {
 
         if (conversationId == null || conversationId.isBlank()) {
             throw new IllegalArgumentException("conversationId cannot be null or empty for sending a message.");
@@ -165,7 +167,8 @@ public class GeminiChatService {
         }
 
         String systemPrompt = createSystemPrompt(level);
-        String requestBody = createRequestBodyWithHistory(systemPrompt, conversation.getMessages(), imageBase64, imageMimeType);
+        String requestBody = createRequestBodyWithHistory(systemPrompt, conversation.getMessages(), imageBase64,
+                imageMimeType);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -204,11 +207,14 @@ public class GeminiChatService {
         String text = switch (level) {
             case "elementary" -> String.format("Hello, %s! I'm your English friend. What did you do today?", userName);
             case "highschool" ->
-                    String.format("Hi %s. Welcome to your academic English session. What topic should we start with?", userName);
-            case "native" ->
-                    String.format("It's a pleasure to connect, %s. I'm ready for a deep and insightful conversation. What's on your mind?",
+                    String.format("Hi %s. Welcome to your academic English session. What topic should we start with?",
                             userName);
-            case "toeic" -> String.format("Welcome, %s. This is your TOEIC preparation session. Let's begin. How may I help you today?", userName);
+            case "native" -> String.format(
+                    "It's a pleasure to connect, %s. I'm ready for a deep and insightful conversation. What's on your mind?",
+                    userName);
+            case "toeic" -> String.format(
+                    "Welcome, %s. This is your TOEIC preparation session. Let's begin. How may I help you today?",
+                    userName);
             default -> String.format("Hi %s! Let's have a great conversation. What would you like to talk about?",
                     userName);
         };
@@ -286,4 +292,5 @@ public class GeminiChatService {
             throw new RuntimeException("Error creating request body", e);
         }
     }
+
 }

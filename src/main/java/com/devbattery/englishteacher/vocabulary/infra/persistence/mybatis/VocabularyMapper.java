@@ -18,7 +18,8 @@ public interface VocabularyMapper {
     // XML의 <select id="existsByIdAndUserId">와 매핑
     // 파라미터가 2개 이상일 때는 @Param을 사용해 이름을 명시해주는 것이 좋습니다.
     boolean existsByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
-    
+
     // XML의 <delete id="deleteById">와 매핑
     void deleteById(Long id);
+
 }

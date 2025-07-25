@@ -24,7 +24,8 @@ public class JsonTypeHandler<T> extends BaseTypeHandler<T> {
         return mapper;
     }
 
-    public JsonTypeHandler() {}
+    public JsonTypeHandler() {
+    }
 
     public JsonTypeHandler(Class<T> type) {
         if (type == null) {
@@ -62,7 +63,8 @@ public class JsonTypeHandler<T> extends BaseTypeHandler<T> {
             return null;
         }
         try {
-            return objectMapper.readValue(json, new TypeReference<T>() {});
+            return objectMapper.readValue(json, new TypeReference<T>() {
+            });
         } catch (Exception e) {
             throw new RuntimeException("Error deserializing JSON to object. JSON: " + json, e);
         }

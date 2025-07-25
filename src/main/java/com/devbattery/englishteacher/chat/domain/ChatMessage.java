@@ -1,7 +1,6 @@
 package com.devbattery.englishteacher.chat.domain;
 
 import java.time.LocalDateTime;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;

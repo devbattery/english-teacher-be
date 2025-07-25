@@ -100,4 +100,5 @@ public class ChatController {
         geminiChatService.deleteConversation(userId, conversationId);
         return ResponseEntity.ok().build();
     }
+
 }

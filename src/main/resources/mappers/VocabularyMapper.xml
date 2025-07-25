@@ -9,19 +9,16 @@
       특정 사용자의 모든 단어를 최신순으로 조회합니다.
       map-underscore-to-camel-case 설정 덕분에 user_id -> userId 자동 매핑됩니다.
     -->
-    <select id="findByUserId" parameterType="long" resultType="com.devbattery.englishteacher.vocabulary.domain.UserVocabulary">
-        SELECT
-            id,
-            user_id,
-            english_expression,
-            korean_meaning,
-            created_at
-        FROM
-            USER_VOCABULARY
-        WHERE
-            user_id = #{userId}
-        ORDER BY
-            created_at DESC
+    <select id="findByUserId" parameterType="long"
+            resultType="com.devbattery.englishteacher.vocabulary.domain.UserVocabulary">
+        SELECT id,
+               user_id,
+               english_expression,
+               korean_meaning,
+               created_at
+        FROM USER_VOCABULARY
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
     </select>
 
     <!--
@@ -42,12 +39,14 @@
     <select id="existsByIdAndUserId" parameterType="map" resultType="boolean">
         SELECT COUNT(*) > 0
         FROM USER_VOCABULARY
-        WHERE id = #{id} AND user_id = #{userId}
+        WHERE id = #{id}
+          AND user_id = #{userId}
     </select>
 
     <!-- 단어를 삭제합니다. -->
     <delete id="deleteById" parameterType="long">
-        DELETE FROM USER_VOCABULARY
+        DELETE
+        FROM USER_VOCABULARY
         WHERE id = #{id}
     </delete>
 

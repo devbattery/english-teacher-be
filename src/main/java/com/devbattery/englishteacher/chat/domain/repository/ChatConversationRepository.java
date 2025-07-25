@@ -1,7 +1,7 @@
 package com.devbattery.englishteacher.chat.domain.repository;
 
 import com.devbattery.englishteacher.chat.domain.ChatConversation;
-import java.util.List; // [신규]
+import java.util.List;
 import java.util.Optional;
 
 public interface ChatConversationRepository {

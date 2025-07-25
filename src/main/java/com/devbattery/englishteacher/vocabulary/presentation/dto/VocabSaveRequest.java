@@ -12,8 +12,8 @@ import lombok.Setter;
 @Setter // JSON 직렬화/역직렬화를 위해 Setter가 필요합니다.
 @NoArgsConstructor // 기본 생성자도 필요합니다.
 public class VocabSaveRequest {
-    
+
     // 사용자가 저장하려는 영어 표현 (예: "look forward to")
     private String expression;
-    
+
 }

@@ -38,7 +38,7 @@
     -->
     <update id="update" parameterType="com.devbattery.englishteacher.user.domain.entity.User">
         UPDATE USERS
-        SET NAME    = #{name},
+        SET NAME      = #{name},
             IMAGE_URL = #{imageUrl}
         WHERE EMAIL = #{email}
     </update>
