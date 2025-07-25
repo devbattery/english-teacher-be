@@ -1,6 +1,8 @@
 package com.devbattery.englishteacher.learning.application;
 
 import com.devbattery.englishteacher.common.config.GeminiPromptProperties;
+import com.devbattery.englishteacher.common.exception.GeminiApiException;
+import com.devbattery.englishteacher.common.exception.ServerErrorException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
@@ -32,9 +34,6 @@ public class GeminiArticleGeneratorService {
     private final ObjectMapper objectMapper;
     private final GeminiPromptProperties promptProperties;
 
-    /**
-     * [수정됨] 이제 이 메소드는 API 응답에서 핵심 JSON 문자열만 추출하여 반환합니다.
-     */
     public String generateArticleJson(String level) {
         String systemPrompt = createPromptForLevel(level);
         String requestBody = createRequestBody(systemPrompt);
@@ -45,19 +44,13 @@ public class GeminiArticleGeneratorService {
         String apiUrl = String.format(apiTemplate, apiKey);
 
         try {
-            log.info("Requesting learning article from Gemini for level: {}", level);
+            log.info("{} 레벨의 Gemini 글 생성", level);
             ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
-
-            // [핵심 변경] 응답 본문 전체가 아닌, 내부 텍스트만 파싱해서 반환하도록 변경
             return parseContentFromResponse(response.getBody());
-
         } catch (HttpClientErrorException e) {
-            log.error("Gemini API Error for learning article - Status: {}, Body: {}", e.getStatusCode(),
-                    e.getResponseBodyAsString(), e);
-            throw new RuntimeException("Failed to generate learning article from Gemini API.", e);
+            throw new GeminiApiException();
         } catch (Exception e) {
-            log.error("An unexpected error occurred while generating learning article", e);
-            throw new RuntimeException("An unexpected error occurred while communicating with AI.", e);
+            throw new ServerErrorException();
         }
     }
 
@@ -71,12 +64,12 @@ public class GeminiArticleGeneratorService {
             JsonNode textNode = rootNode.path("candidates").get(0).path("content").path("parts").get(0).path("text");
 
             if (textNode.isMissingNode()) {
-                log.error("Could not find 'text' field in Gemini response: {}", fullJsonResponse);
+                log.error("text 필드를 찾을 수 없음: {}", fullJsonResponse);
                 // LearningService가 처리할 수 있도록 빈 JSON 객체 문자열을 반환
                 return "{}";
             }
 
-            // textNode.asText()는 이미 완벽한 JSON 문자열이므로 그대로 반환합니다.
+            // textNode.asText()는 이미 완벽한 JSON 문자열이므로 그대로 반환
             return textNode.asText();
 
         } catch (Exception e) {
@@ -85,8 +78,6 @@ public class GeminiArticleGeneratorService {
             return "{}";
         }
     }
-
-    // --- 아래 메소드들은 변경할 필요 없습니다 ---
 
     private String createPromptForLevel(String level) {
         String levelDescription = promptProperties.getLevelDescriptions()
@@ -109,8 +100,7 @@ public class GeminiArticleGeneratorService {
         try {
             return objectMapper.writeValueAsString(requestMap);
         } catch (Exception e) {
-            log.error("Error creating request body for Gemini API", e);
-            throw new RuntimeException("Error creating request body for AI API", e);
+            throw new GeminiApiException();
         }
     }
 

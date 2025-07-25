@@ -4,12 +4,11 @@ import com.devbattery.englishteacher.learning.domain.LearningContent;
 import java.time.LocalDate;
 import java.util.Optional;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface LearningContentMapper {
 
-    Optional<LearningContent> findByLevelAndDate(@Param("level") String level, @Param("date") LocalDate date);
+    Optional<LearningContent> findByLevelAndDate(String level, LocalDate date);
 
     void save(LearningContent content);
 
