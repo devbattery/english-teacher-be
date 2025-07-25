@@ -2,11 +2,16 @@ package com.devbattery.englishteacher.chat.application.service;
 
 import com.devbattery.englishteacher.chat.domain.ChatConversation;
 import com.devbattery.englishteacher.chat.domain.ChatMessage;
-import com.devbattery.englishteacher.chat.domain.repository.ChatConversationRepository;
 import com.devbattery.englishteacher.chat.presentation.dto.ChatResponse;
 import com.devbattery.englishteacher.chat.presentation.dto.ChatRoomSummaryResponse;
 import com.devbattery.englishteacher.common.config.FileStorageProperties;
 import com.devbattery.englishteacher.common.config.GeminiPromptProperties;
+import com.devbattery.englishteacher.common.exception.ChatMessageNotFoundException;
+import com.devbattery.englishteacher.common.exception.ChatRoomOverException;
+import com.devbattery.englishteacher.common.exception.FileStorageException;
+import com.devbattery.englishteacher.common.exception.GeminiApiException;
+import com.devbattery.englishteacher.common.exception.ServerErrorException;
+import com.devbattery.englishteacher.common.exception.UserUnauthorizedException;
 import com.devbattery.englishteacher.user.application.service.UserReadService;
 import com.devbattery.englishteacher.user.domain.entity.User;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -46,12 +51,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class GeminiChatService {
 
-    private final UserReadService userReadService;
-    private final GeminiPromptProperties promptProperties;
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
-    private final ChatConversationRepository chatConversationRepository;
-    private final FileStorageProperties fileStorageProperties;
+    private static final int MAX_CHAT_ROOMS_PER_LEVEL = 10;
 
     @Value("${gemini.api.key-chat}")
     private String apiKey;
@@ -62,17 +62,22 @@ public class GeminiChatService {
     @Value("${gemini.api.template}")
     private String apiTemplate;
 
-    private static final int MAX_CHAT_ROOMS_PER_LEVEL = 10;
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+
+    private final FileStorageProperties fileStorageProperties;
+    private final UserReadService userReadService;
+    private final ChatConversationService chatConversationService;
+    private final GeminiPromptProperties promptProperties;
 
     /**
      * 새로운 채팅방을 생성할 때, 첫 AI 인사말을 포함하여 생성
      */
     @Transactional
     public ChatRoomSummaryResponse createChatRoom(Long userId, String level) {
-        long roomCount = chatConversationRepository.countByUserIdAndTeacherLevel(userId, level);
+        long roomCount = chatConversationService.countByUserIdAndTeacherLevel(userId, level);
         if (roomCount >= MAX_CHAT_ROOMS_PER_LEVEL) {
-            throw new IllegalStateException(
-                    "You have reached the maximum number of chat rooms for the " + level + " level.");
+            throw new ChatRoomOverException();
         }
 
         User user = userReadService.fetchById(userId);
@@ -80,14 +85,14 @@ public class GeminiChatService {
 
         ChatConversation conversation = new ChatConversation(userId, level);
         conversation.addMessage(firstAiMessage.getSender(), firstAiMessage.getText());
-        chatConversationRepository.save(conversation);
+        chatConversationService.save(conversation);
 
         return ChatRoomSummaryResponse.from(conversation);
     }
 
     @Transactional(readOnly = true)
-    public List<ChatRoomSummaryResponse> getConversationListByLevel(Long userId, String level) {
-        return chatConversationRepository.findAllByUserIdAndTeacherLevel(userId, level)
+    public List<ChatRoomSummaryResponse> fetchConversationListByLevel(Long userId, String level) {
+        return chatConversationService.fetchAllByUserIdAndTeacherLevel(userId, level)
                 .stream()
                 .sorted(Comparator.comparing(
                         ChatConversation::getLastModifiedAt,
@@ -99,44 +104,35 @@ public class GeminiChatService {
 
     @Transactional(readOnly = true)
     public List<ChatMessage> getConversationHistory(Long userId, String conversationId) {
-        ChatConversation conversation = chatConversationRepository.findById(conversationId)
-                .orElseThrow(() -> new IllegalArgumentException("Chat room not found with id: " + conversationId));
+        ChatConversation conversation = chatConversationService.findById(conversationId);
 
         if (!conversation.getUserId().equals(userId)) {
-            throw new SecurityException("User does not have permission to access this chat room.");
+            throw new UserUnauthorizedException();
         }
 
         return conversation.getMessages();
     }
 
-    /**
-     * [수정] 채팅 응답 로직. 이제 첫 메시지 생성 책임이 없습니다.
-     * (단, 방어 코드로 남겨두는 것은 좋습니다.)
-     */
     @Transactional
-    public ChatResponse getChatResponse(Long userId, String level, String conversationId, String userMessage,
-                                        @Nullable MultipartFile imageFile) {
+    public ChatResponse fetchChatResponse(Long userId, String level, String conversationId, String userMessage,
+                                          @Nullable MultipartFile imageFile) {
 
         if (conversationId == null || conversationId.isBlank()) {
-            throw new IllegalArgumentException("conversationId cannot be null or empty for sending a message.");
+            throw new ChatMessageNotFoundException();
         }
 
-        ChatConversation conversation = chatConversationRepository.findById(conversationId)
-                .orElseThrow(() -> new IllegalArgumentException("Chat room not found with id: " + conversationId));
+        ChatConversation conversation = chatConversationService.findById(conversationId);
 
         if (!conversation.getUserId().equals(userId)) {
-            throw new SecurityException("User does not have permission to access this chat room.");
+            throw new UserUnauthorizedException();
         }
 
-        // 이 코드는 이제 정상적인 흐름에서는 실행되지 않지만,
-        // 혹시 모를 비어있는 방 데이터에 대한 방어 코드로써 유용합니다.
         if (conversation.getMessages().isEmpty()) {
             User user = userReadService.fetchById(userId);
             ChatMessage firstAiMessage = createFirstMessageForLevel(level, user.getName());
             conversation.addMessage(firstAiMessage.getSender(), firstAiMessage.getText());
         }
 
-        // --- 이하 로직은 변경 없음 ---
         String imageUrl = null;
         String imageBase64 = null;
         String imageMimeType = null;
@@ -148,8 +144,7 @@ public class GeminiChatService {
                 imageMimeType = imageFile.getContentType();
                 conversation.addMessage("user", userMessage, imageUrl);
             } catch (IOException e) {
-                log.error("Failed to store or encode image file", e);
-                throw new RuntimeException("Sorry, I had a problem processing your image. Please try again.");
+                throw new FileStorageException();
             }
         } else {
             conversation.addMessage("user", userMessage);
@@ -168,27 +163,24 @@ public class GeminiChatService {
             ResponseEntity<String> response = restTemplate.postForEntity(fullApiUrl, entity, String.class);
             String aiResponseText = parseResponse(response.getBody());
             conversation.addMessage("ai", aiResponseText);
-            chatConversationRepository.save(conversation);
+            chatConversationService.save(conversation);
             return new ChatResponse(aiResponseText, conversation.getId());
         } catch (HttpClientErrorException e) {
-            log.error("Gemini API Error - Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
-            throw new RuntimeException("Sorry, I encountered an error with the AI service. Please try again.");
+            throw new GeminiApiException();
         } catch (Exception e) {
-            log.error("An unexpected error occurred during chat processing", e);
-            throw new RuntimeException("An unexpected error occurred. Please check the server logs.");
+            throw new ServerErrorException();
         }
     }
 
     @Transactional
     public void deleteConversation(Long userId, String conversationId) {
-        ChatConversation conversation = chatConversationRepository.findById(conversationId)
-                .orElseThrow(() -> new IllegalArgumentException("Chat room not found with id: " + conversationId));
+        ChatConversation conversation = chatConversationService.findById(conversationId);
 
         if (!conversation.getUserId().equals(userId)) {
-            throw new SecurityException("User does not have permission to delete this chat room.");
+            throw new UserUnauthorizedException();
         }
 
-        chatConversationRepository.deleteById(conversationId);
+        chatConversationService.deleteById(conversationId);
         log.info("Chat room with id '{}' for user {} has been deleted.", conversationId, userId);
     }
 
@@ -277,8 +269,7 @@ public class GeminiChatService {
         try {
             return objectMapper.writeValueAsString(requestMap);
         } catch (Exception e) {
-            log.error("Error creating request body for Gemini API", e);
-            throw new RuntimeException("Error creating request body", e);
+            throw new ServerErrorException();
         }
     }
 

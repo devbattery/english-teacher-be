@@ -12,11 +12,10 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthCodeService {
 
-    private final RedisTemplate<String, Object> redisTemplate;
     private static final String AUTH_CODE_PREFIX = "auth_code:";
-
-    // 임시 코드는 매우 짧은 시간 동안만 유효해야 됨
     private static final Duration AUTH_CODE_EXPIRATION = Duration.ofMinutes(1);
+
+    private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 토큰들을 저장하고 이에 대한 임시 인증 코드를 생성
