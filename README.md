@@ -55,7 +55,8 @@ $ git clone https://github.com/devbattery/english-teacher-fe
 
 ```shell
 $ cd english-teacher-be
-$ ./gradlew build
+$ ./gradlew clean build
+$ java -jar build/libs/english-teacher-0.0.1-SNAPSHOT.jar
 ```
 
 #### Frontend
@@ -119,3 +120,7 @@ $ serve -s dist
     </td>
   </tr>
 </table>
+
+## 기능 소개
+
+- TODO
