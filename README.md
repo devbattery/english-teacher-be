@@ -1,66 +1,115 @@
-# English Trainer for Anyone
+# English Teacher
 
-영어 실력이 어떻든, 학습자의 실력에 따라 각각의 LLM 선생님을 선택하여 영어를 학습해 나갈 수 있습니다.
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/ddf05811-8290-427d-992d-47cc0c5c0880" alt="프로젝트 소개 아이콘" width="500"/>
+</div>
 
-- 선생님
-    - 초급자: 문법 기초, 기본 어휘, 간단한 문장 만들기에 집중
-    - 중급자: 뉘앙스 차이, 유창성 향상, 자연스러운 표현 학습에 집중
-    - 고급자: 비즈니스 영어, 학술 작문, 전문 용어, 원어민 수준의 표현력에 집중
-    - 특정 목적: 시험 준비생(TOEIC, TOEFL), 직장인, 여행자 등
+<br>
 
-## 아이디어 1: AI 네이티브 스피커 친구 (대화/스피킹 집중)
+> 개발 기간: 2025.05 ~ 진행중  
+> 도메인 링크: [https://englishteacher.store](https://englishteacher.store/)  
+> 프론트엔드 링크: https://github.com/devbattery/english-teacher-fe  
+> 백엔드 링크: https://github.com/devbattery/english-teacher-be
 
-가장 직관적이고 강력한 모델입니다. 사용자가 24시간 언제든지 부담 없이 대화할 수 있는 AI 친구를 만들어주는 컨셉입니다.
+## 개발 인원 소개
 
-* **핵심 기능:**
+|                                                                                  1인 개발                                                                                  |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| <a href="https://github.com/devbattery"><img src="https://avatars.githubusercontent.com/devbattery" width="120px;"></a><br/>[<b>정원준</b>](https://github.com/devbattery) |
 
-1. **자유 대화 (Free Chat):** 사용자가 어떤 주제로든 영어로 대화를 시작하면 LLM이 자연스럽게 친구처럼 받아줍니다. (음성 채팅 기능 포함 시 파급력 UP)
-2. **상황별 롤플레잉:** "카페에서 주문하기", "면접 인터뷰", "호텔 체크인" 등 특정 상황을 설정하면 LLM이 해당 역할(점원, 면접관 등)을 수행합니다.
-3. **실시간 교정 및 제안:** 사용자의 문장에서 어색한 부분이나 문법 오류를 실시간으로 교정해 줍니다.
-    *   (나쁜 예) "You're wrong."
-    *   (좋은 예) "Great try! A more natural way to say that would be '...' because..."
-4. **표현 추천:** "이 말을 더 세련되게/정중하게/캐주얼하게 말하고 싶어"라고 요청하면 LLM이 다양한 표현을 제안합니다.
+## 프로젝트 소개
 
-* **기술 포인트:** 음성 인식(STT), 음성 합성(TTS) 기술 결합, 자연스러운 대화를 위한 프롬프트 엔지니어링이 중요.
+현재 AI의 발전 속도가 기하급수적으로 올라가고 있습니다.
 
-## 아이디어 2: AI 영작 전문 코치 (쓰기/라이팅 집중)
+**English Teacher는 이 속도의 흐름을 적극적으로 활용하려고 합니다.**
 
-단순 문법 검사기를 넘어, 글의 '결'을 다듬어주는 전문 코치 컨셉입니다.
+대한민국 학생이라면 빠르면 유치원생 때부터, 늦으면 초등학생 때부터라도 영어 공부를 시작합니다. 하지만, 막상 성인이 되어도 영어가 어렵다고 느끼는 경우가 많습니다.
 
-* **핵심 기능:**
+**English Teacher의 학습 방향을 따라오시면, 분명 지금까지의 공부보다 더 실전적으로 영어를 친근하게 느끼실 수 있을 겁니다.**
 
-1. **단순 교정 (Proofreading):** 문법, 철자 오류를 잡아줍니다. (기본 기능)
-2. **스타일 교정 (Style & Nuance):**
-    *   **"내 문장 레벨업":** 사용자가 쓴 문장을 더 고급스럽고 자연스러운 문장으로 바꿔줍니다. (e.g., "I am happy" -> "I'm thrilled," "I'm on cloud nine")
-    *   **"뉘앙스 분석":** "이 표현은 너무 직설적인가요?", "이메일에 쓰기 적절한가요?" 같은 질문에 답해줍니다.
-3. **패러프레이징 (Paraphrasing):** 같은 의미의 문장을 다양한 방식으로 표현하는 법을 보여주어 표현력을 길러줍니다.
-4. **글쓰기 챌린지:** "오늘의 주제: '나의 최고의 여행'"에 대해 100단어 에세이를 써보세요" 와 같이 매일 글감과 목표를 제시하고 피드백을 줍니다.
+우리의 웹 사이트는 이렇습니다.
 
-* **기술 포인트:** 사용자의 의도를 파악하고, 여러 대안을 제시하며, 그 이유를 설명해주는 섬세한 프롬프트 설계가 핵심입니다.
+1. AI에 막대한 돈을 쏟아붓고 있는 Google의 **Gemini API**를 활용합니다.
+2. **왕초보**, **고등학생**, **원어민**, **TOEIC** 총 4가지의 자체적으로 학습시킨 모델을 만나보실 수 있습니다.
+3. **PC 버전**, **모바일 버전**을 모두 지원하며 **웹 앱**으로도 사용하실 수 있습니다.
+4. 백엔드는 **Spring Boot**를 이용했고, 프론트엔드는 **Vite React**를 이용하여 개발했습니다.
 
-## 아이디어 3: 인터랙티브 콘텐츠 생성기 (읽기/어휘 집중)
+## 시작 가이드
 
-사용자의 관심사에 맞춰 세상에 없던 새로운 영어 콘텐츠를 무한 생성해주는 컨셉입니다.
+### Requirements
 
-* **핵심 기능:**
+- Java 17
+- Npm 10.9.2
 
-1. **맞춤형 스토리/기사 생성:** 사용자가 "우주를 여행하는 고양이 탐정 이야기 (초급자 레벨)"와 같이 키워드와 난이도를 입력하면 LLM이 즉석에서 짧은 이야기를 만들어줍니다.
-2. **똑똑한 단어장:** 생성된 콘텐츠에서 모르는 단어를 클릭하면, LLM이 그 단어의 뜻, 예문, 그리고 **해당 문맥에 가장 잘 맞는 뉘앙스**를 설명해줍니다. "이 이야기 속에서 'gloomy'는 '우울한'
-   보다는 '어둑어둑한' 날씨를 의미해요" 와 같이요.
-3. **능동적 읽기 (Active Reading):** LLM이 콘텐츠 내용을 바탕으로 사용자에게 질문을 던집니다. ("주인공 고양이는 왜 슬퍼 보였을까요?") 이를 통해 단순 해석이 아닌 이해도를 높입니다.
-4. **난이도 조절:** "이 기사를 더 쉽게/어렵게 바꿔줘" 버튼으로 같은 콘텐츠를 자신의 수준에 맞게 조절해서 읽을 수 있습니다.
+### Installation
 
-* **기술 포인트:** 콘텐츠 생성 능력과 사용자와의 상호작용을 자연스럽게 연결하는 UX/UI가 중요합니다.
+```shell
+$ git clone https://github.com/devbattery/english-teacher-be
+```
 
-## 아이디어 4: 올인원 퍼스널 튜터 (종합)
+```shell
+$ git clone https://github.com/devbattery/english-teacher-fe
+```
 
-위의 기능들을 통합하여, 사용자의 모든 학습 과정을 기록하고 분석해 개인화된 커리큘럼을 제공하는 가장 야심 찬 모델입니다.
+#### Backend
 
-* **핵심 기능:**
+```shell
+$ cd english-teacher-be
+$ ./gradlew build
+```
 
-1. **진단 테스트:** 초기에 LLM과의 간단한 대화나 작문을 통해 사용자의 레벨을 정확히 진단합니다.
-2. **개인화된 대시보드:** "당신은 현재 시제 실수는 적지만, 관사(a/the) 사용에 약점을 보입니다. 오늘은 관사 관련 롤플레잉을 해볼까요?" 와 같이 데이터 기반의 맞춤 제안을 합니다.
-3. **약점 집중 훈련:** 사용자가 자주 틀리는 문법이나 어휘를 자동으로 파악해 관련 문제나 드릴(drill)을 생성해 줍니다.
-4. **종합 리포트:** 주간/월간 학습 리포트를 생성하여 성장 과정을 시각적으로 보여줍니다.
+#### Frontend
 
-* **기술 포인트:** 사용자 데이터 분석 및 저장, 개인화 추천 로직, 장기적인 학습 계획 설계 능력이 필요합니다.
+```shell
+$ cd english-teacher-fe
+$ npm run build
+$ npm install -g serve
+$ serve -s dist
+```
+
+## 화면 구성
+
+### HomePage
+
+<table>
+  <tr>
+    <td align="center">
+      <strong>라이트모드</strong> <br/>
+      <img width="400" alt="Screenshot 2025-07-26 at 21 17 59" src="https://github.com/user-attachments/assets/98e34519-c9f7-4f1d-98b2-66f8c41938a5" />
+    </td>
+    <td align="center">
+      <strong>다크모드</strong> <br/>
+      <img width="400" alt="Screenshot 2025-07-26 at 21 18 29" src="https://github.com/user-attachments/assets/805180fa-5b0a-4ac3-86e4-fc702b13f840" />
+    </td>
+  </tr>
+</table>
+
+### Messenger
+
+<table>
+  <tr>
+    <td align="center">
+      <strong>채팅 목록 페이지</strong> <br/>
+      <img width="400" alt="Screenshot 2025-07-26 at 21 19 59" src="https://github.com/user-attachments/assets/9e28d1f8-ff5f-4c8d-ac26-7aa29a4c4ade" />
+    </td>
+    <td align="center">
+      <strong>채팅 세부 페이지</strong> <br/>
+      <img width="400" alt="Screenshot 2025-07-26 at 21 22 28" src="https://github.com/user-attachments/assets/b113479f-ef8d-46e8-a5c9-e8fc604c10df" />
+    </td>
+  </tr>
+</table>
+
+### Daily Contents
+
+<table>
+  <tr>
+    <td align="center">
+      <strong>컨텐츠 페이지</strong> <br/>
+      <img width="400" alt="Screenshot 2025-07-26 at 21 23 55" src="https://github.com/user-attachments/assets/b73ded9e-f294-40cb-af7b-d0b8422a3e20" />
+    </td>
+    <td align="center">
+      <strong>컨텐츠 단어장 생성 기능</strong> <br/>
+      <img width="400" alt="Screenshot 2025-07-26 at 21 24 49" src="https://github.com/user-attachments/assets/e0c50784-eaa6-4d5e-a90f-cc6f7e1849f1" />
+    </td>
+  </tr>
+</table>
