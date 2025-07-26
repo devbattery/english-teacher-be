@@ -73,12 +73,14 @@ $ serve -s dist
 
 <table>
   <tr>
+    <td align="center"><strong>라이트모드</strong></td>
+    <td align="center"><strong>다크모드</strong></td>
+  </tr>
+  <tr>
     <td align="center">
-      <strong>라이트모드</strong> <br/>
       <img width="400" alt="Screenshot 2025-07-26 at 21 17 59" src="https://github.com/user-attachments/assets/98e34519-c9f7-4f1d-98b2-66f8c41938a5" />
     </td>
     <td align="center">
-      <strong>다크모드</strong> <br/>
       <img width="400" alt="Screenshot 2025-07-26 at 21 18 29" src="https://github.com/user-attachments/assets/805180fa-5b0a-4ac3-86e4-fc702b13f840" />
     </td>
   </tr>
@@ -88,12 +90,14 @@ $ serve -s dist
 
 <table>
   <tr>
+    <td align="center"><strong>채팅 목록 페이지</strong></td>
+    <td align="center"><strong>채팅 세부 페이지</strong></td>
+  </tr>
+  <tr>
     <td align="center">
-      <strong>채팅 목록 페이지</strong> <br/>
       <img width="400" alt="Screenshot 2025-07-26 at 21 19 59" src="https://github.com/user-attachments/assets/9e28d1f8-ff5f-4c8d-ac26-7aa29a4c4ade" />
     </td>
     <td align="center">
-      <strong>채팅 세부 페이지</strong> <br/>
       <img width="400" alt="Screenshot 2025-07-26 at 21 22 28" src="https://github.com/user-attachments/assets/b113479f-ef8d-46e8-a5c9-e8fc604c10df" />
     </td>
   </tr>
@@ -103,12 +107,14 @@ $ serve -s dist
 
 <table>
   <tr>
+    <td align="center"><strong>컨텐츠 페이지</strong></td>
+    <td align="center"><strong>컨텐츠 단어장 생성 기능</strong></td>
+  </tr>
+  <tr>
     <td align="center">
-      <strong>컨텐츠 페이지</strong> <br/>
       <img width="400" alt="Screenshot 2025-07-26 at 21 23 55" src="https://github.com/user-attachments/assets/b73ded9e-f294-40cb-af7b-d0b8422a3e20" />
     </td>
     <td align="center">
-      <strong>컨텐츠 단어장 생성 기능</strong> <br/>
       <img width="400" alt="Screenshot 2025-07-26 at 21 24 49" src="https://github.com/user-attachments/assets/e0c50784-eaa6-4d5e-a90f-cc6f7e1849f1" />
     </td>
   </tr>
