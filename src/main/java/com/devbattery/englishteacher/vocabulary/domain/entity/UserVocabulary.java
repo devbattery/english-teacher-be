@@ -23,8 +23,8 @@ public class UserVocabulary {
         this.isMemorized = isMemorized;
     }
 
-    public void updateMemorized(boolean memorized) {
-        isMemorized = memorized;
+    public void updateMemorized(boolean isMemorized) {
+        this.isMemorized = isMemorized;
     }
 
 }
