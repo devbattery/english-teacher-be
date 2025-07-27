@@ -33,4 +33,14 @@ public class VocabularyRepositoryImpl implements VocabularyRepository {
         vocabularyMapper.deleteById(id);
     }
 
+    @Override
+    public UserVocabulary findByIdAndUserId(Long id, Long userId) {
+        return vocabularyMapper.findByIdAndUserId(id, userId);
+    }
+
+    @Override
+    public void updateMemorizedStatus(UserVocabulary vocabulary) {
+        vocabularyMapper.updateMemorizedStatus(vocabulary);
+    }
+
 }

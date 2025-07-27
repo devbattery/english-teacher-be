@@ -14,4 +14,8 @@ public interface VocabularyRepository {
 
     void deleteById(Long id);
 
+    UserVocabulary findByIdAndUserId(Long id, Long userId);
+
+    void updateMemorizedStatus(UserVocabulary vocabulary);
+
 }

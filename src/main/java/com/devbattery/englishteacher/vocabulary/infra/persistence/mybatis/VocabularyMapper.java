@@ -16,4 +16,8 @@ public interface VocabularyMapper {
 
     void deleteById(Long id);
 
+    UserVocabulary findByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
+
+    void updateMemorizedStatus(UserVocabulary vocabulary);
+
 }

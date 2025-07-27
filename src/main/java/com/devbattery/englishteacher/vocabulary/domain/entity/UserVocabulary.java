@@ -14,11 +14,17 @@ public class UserVocabulary {
     private String englishExpression;
     private String koreanMeaning;
     private LocalDateTime createdAt;
+    private boolean isMemorized;
 
-    public UserVocabulary(Long userId, String englishExpression, String koreanMeaning) {
+    public UserVocabulary(Long userId, String englishExpression, String koreanMeaning, boolean isMemorized) {
         this.userId = userId;
         this.englishExpression = englishExpression;
         this.koreanMeaning = koreanMeaning;
+        this.isMemorized = isMemorized;
+    }
+
+    public void updateMemorized(boolean memorized) {
+        isMemorized = memorized;
     }
 
 }

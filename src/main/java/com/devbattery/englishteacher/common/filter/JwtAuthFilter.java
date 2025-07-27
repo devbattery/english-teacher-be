@@ -26,9 +26,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
         String path = request.getRequestURI();
-
         boolean isExcluded = Arrays.stream(AuthEndpoints.PERMIT_ALL_PATTERNS)
                 .anyMatch(pattern -> pathMatcher.match(pattern, path));
 

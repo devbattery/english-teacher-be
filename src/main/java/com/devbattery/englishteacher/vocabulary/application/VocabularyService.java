@@ -25,7 +25,7 @@ public class VocabularyService {
     @Transactional
     public UserVocabulary saveNewWord(VocabSaveRequest request, Long userId) {
         String koreanMeaning = translationService.translateToKorean(request.getExpression());
-        UserVocabulary newVocab = new UserVocabulary(userId, request.getExpression(), koreanMeaning);
+        UserVocabulary newVocab = new UserVocabulary(userId, request.getExpression(), koreanMeaning, false);
         vocabularyRepository.save(newVocab);
         return newVocab;
     }
@@ -37,6 +37,16 @@ public class VocabularyService {
         }
 
         vocabularyRepository.deleteById(wordId);
+    }
+
+    @Transactional
+    public void toggleMemorizedStatus(Long wordId, Long userId) throws AccessDeniedException {
+        UserVocabulary vocab = vocabularyRepository.findByIdAndUserId(wordId, userId);
+        if (vocab == null) {
+            throw new UserUnauthorizedException();
+        }
+        vocab.updateMemorized(!vocab.isMemorized());
+        vocabularyRepository.updateMemorizedStatus(vocab);
     }
 
 }

@@ -2,40 +2,41 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- 매퍼 인터페이스의 전체 경로와 일치해야 합니다. -->
 <mapper namespace="com.devbattery.englishteacher.vocabulary.infra.persistence.mybatis.VocabularyMapper">
 
-    <!-- 
-      특정 사용자의 모든 단어를 최신순으로 조회합니다.
-      map-underscore-to-camel-case 설정 덕분에 user_id -> userId 자동 매핑됩니다.
-    -->
     <select id="findByUserId" parameterType="long"
             resultType="com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary">
         SELECT id,
                user_id,
                english_expression,
                korean_meaning,
-               created_at
+               created_at,
+               is_memorized -- [추가]
         FROM USER_VOCABULARY
         WHERE user_id = #{userId}
         ORDER BY created_at DESC
     </select>
 
-    <!--
-      새로운 단어를 저장합니다.
-      useGeneratedKeys="true"와 keyProperty="id"를 통해, insert 후
-      파라미터로 전달된 UserVocabulary 객체의 id 필드에 자동 생성된 PK값이 채워집니다.
-    -->
+    <!-- [추가] ID로 단일 단어를 조회합니다 (소유권 검증 포함) -->
+    <select id="findByIdAndUserId" parameterType="map" resultType="com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary">
+        SELECT id, user_id, english_expression, korean_meaning, created_at, is_memorized
+        FROM USER_VOCABULARY
+        WHERE id = #{id} AND user_id = #{userId}
+    </select>
+
     <insert id="save" parameterType="com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary"
             useGeneratedKeys="true" keyProperty="id">
         INSERT INTO USER_VOCABULARY (user_id, english_expression, korean_meaning)
         VALUES (#{userId}, #{englishExpression}, #{koreanMeaning})
     </insert>
 
-    <!-- 
-      단어 ID와 사용자 ID로 단어 존재 여부를 확인합니다 (삭제 권한 체크용).
-      COUNT(*) > 0 결과를 boolean 타입으로 반환합니다.
-    -->
+    <!-- [추가] 단어의 '외웠음' 상태를 업데이트합니다. -->
+    <update id="updateMemorizedStatus" parameterType="com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary">
+        UPDATE USER_VOCABULARY
+        SET is_memorized = #{isMemorized}
+        WHERE id = #{id} AND user_id = #{userId}
+    </update>
+
     <select id="existsByIdAndUserId" parameterType="map" resultType="boolean">
         SELECT COUNT(*) > 0
         FROM USER_VOCABULARY
@@ -43,7 +44,6 @@
           AND user_id = #{userId}
     </select>
 
-    <!-- 단어를 삭제합니다. -->
     <delete id="deleteById" parameterType="long">
         DELETE
         FROM USER_VOCABULARY
