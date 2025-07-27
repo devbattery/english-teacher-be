@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-
-<!-- src/main/resources/mappers/LearningContentMapper.xml -->
 <mapper namespace="com.devbattery.englishteacher.learning.infra.persistence.mybatis.LearningContentMapper">
     <resultMap id="LearningContentResultMap" type="com.devbattery.englishteacher.learning.domain.LearningContent">
         <id property="id" column="id"/>
@@ -10,7 +8,7 @@
         <result property="title" column="title"/>
         <result property="content" column="content"/>
         <result property="createdDate" column="created_date"/>
-        <!-- [추가] keyExpressions 컬럼 매핑 -->
+        <result property="generatedByUserName" column="generated_by_user_name"/> <!-- [추가] -->
         <result property="keyExpressions" column="key_expressions" javaType="java.util.List"
                 typeHandler="com.devbattery.englishteacher.common.handler.json.JsonTypeHandler"/>
     </resultMap>
@@ -21,7 +19,8 @@
         level,
         title,
         content,
-        key_expressions, <!-- [추가] -->
+        key_expressions,
+        generated_by_user_name, <!-- [추가] -->
         created_date
         FROM
         LEARNING_CONTENT
@@ -30,9 +29,9 @@
     </select>
 
     <insert id="save" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO LEARNING_CONTENT (level, title, content, key_expressions, created_date) <!-- [수정] -->
+        INSERT INTO LEARNING_CONTENT (level, title, content, key_expressions, generated_by_user_name, created_date) <!-- [수정] -->
         VALUES (#{level}, #{title}, #{content},
         #{keyExpressions, typeHandler=com.devbattery.englishteacher.common.handler.json.JsonTypeHandler},
-        #{createdDate}) <!-- [수정] -->
+        #{generatedByUserName}, #{createdDate}) <!-- [수정] -->
     </insert>
 </mapper>

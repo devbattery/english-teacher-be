@@ -1,9 +1,12 @@
 package com.devbattery.englishteacher.learning.presentation;
 
+import com.devbattery.englishteacher.auth.domain.UserPrincipal;
 import com.devbattery.englishteacher.learning.application.LearningService;
 import com.devbattery.englishteacher.learning.application.dto.LearningContentResponse;
+import com.devbattery.englishteacher.user.application.service.UserReadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,10 +16,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class LearningController {
 
     private final LearningService learningService;
+    private final UserReadService userReadService;
 
     @GetMapping("/api/learning/today/{level}")
-    public ResponseEntity<?> getDailyLearningContent(@PathVariable String level) {
-        LearningContentResponse content = learningService.getDailyContent(level);
+    public ResponseEntity<?> getDailyLearningContent(
+            @PathVariable String level,
+            @AuthenticationPrincipal UserPrincipal userPrincipal // [수정] 현재 로그인한 사용자 정보를 받음
+    ) {
+        String userName = userReadService.fetchById(userPrincipal.getId()).getName();
+        LearningContentResponse content = learningService.getDailyContent(level, userName);
         return ResponseEntity.ok(content);
     }
 
