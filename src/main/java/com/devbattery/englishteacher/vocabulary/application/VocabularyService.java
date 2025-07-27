@@ -3,9 +3,12 @@ package com.devbattery.englishteacher.vocabulary.application;
 import com.devbattery.englishteacher.common.exception.UserUnauthorizedException;
 import com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary;
 import com.devbattery.englishteacher.vocabulary.domain.repository.VocabularyRepository;
+import com.devbattery.englishteacher.vocabulary.presentation.dto.PagedVocabResponse;
+import com.devbattery.englishteacher.vocabulary.presentation.dto.VocabResponse;
 import com.devbattery.englishteacher.vocabulary.presentation.dto.VocabSaveRequest;
 import java.nio.file.AccessDeniedException;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,8 +21,19 @@ public class VocabularyService {
     private final GeminiTranslationService translationService;
 
     @Transactional(readOnly = true)
-    public List<UserVocabulary> fetchMyVocabulary(Long userId) {
-        return vocabularyRepository.fetchByUserId(userId);
+    public PagedVocabResponse fetchMyVocabularyPaginated(Long userId, String searchTerm, int page, int size) {
+        long offset = (long) page * size;
+        List<UserVocabulary> vocabList = vocabularyRepository.findPaginatedByUserIdAndSearchTerm(userId, searchTerm, size, offset);
+        long totalElements = vocabularyRepository.countByUserIdAndSearchTerm(userId, searchTerm);
+
+        List<VocabResponse> content = vocabList.stream()
+                .map(VocabResponse::from)
+                .collect(Collectors.toList());
+
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        boolean isLast = page >= totalPages - 1;
+
+        return new PagedVocabResponse(content, page, size, totalElements, totalPages, isLast);
     }
 
     @Transactional

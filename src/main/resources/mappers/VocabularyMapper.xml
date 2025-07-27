@@ -15,22 +15,6 @@
     </resultMap>
 
     <!--
-      특정 사용자의 모든 단어를 최신순으로 조회합니다.
-      resultType 대신 resultMap을 사용하여 정의된 매핑 규칙을 따르도록 합니다.
-    -->
-    <select id="findByUserId" parameterType="long" resultMap="UserVocabularyResultMap">
-        SELECT id,
-               user_id,
-               english_expression,
-               korean_meaning,
-               created_at,
-               is_memorized
-        FROM USER_VOCABULARY
-        WHERE user_id = #{userId}
-        ORDER BY created_at DESC
-    </select>
-
-    <!--
       ID와 사용자 ID로 단일 단어를 조회합니다 (소유권 검증 및 상태 업데이트용).
       마찬가지로 resultMap을 사용하여 정확한 매핑을 보장합니다.
     -->
@@ -83,5 +67,27 @@
         FROM USER_VOCABULARY
         WHERE id = #{id}
     </delete>
+
+    <!-- [수정] 페이지네이션과 검색을 위한 새로운 find 쿼리 -->
+    <select id="findPaginatedByUserIdAndSearchTerm" resultMap="UserVocabularyResultMap">
+        SELECT id, user_id, english_expression, korean_meaning, created_at, is_memorized
+        FROM USER_VOCABULARY
+        WHERE user_id = #{userId}
+        <if test="searchTerm != null and searchTerm != ''">
+            AND (english_expression LIKE CONCAT('%', #{searchTerm}, '%') OR korean_meaning LIKE CONCAT('%', #{searchTerm}, '%'))
+        </if>
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- [추가] 페이지네이션을 위한 전체 개수 카운트 쿼리 -->
+    <select id="countByUserIdAndSearchTerm" resultType="long">
+        SELECT COUNT(*)
+        FROM USER_VOCABULARY
+        WHERE user_id = #{userId}
+        <if test="searchTerm != null and searchTerm != ''">
+            AND (english_expression LIKE CONCAT('%', #{searchTerm}, '%') OR korean_meaning LIKE CONCAT('%', #{searchTerm}, '%'))
+        </if>
+    </select>
 
 </mapper>

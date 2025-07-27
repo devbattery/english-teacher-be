@@ -14,11 +14,6 @@ public class VocabularyRepositoryImpl implements VocabularyRepository {
     private final VocabularyMapper vocabularyMapper;
 
     @Override
-    public List<UserVocabulary> fetchByUserId(Long userId) {
-        return vocabularyMapper.findByUserId(userId);
-    }
-
-    @Override
     public void save(UserVocabulary vocabulary) {
         vocabularyMapper.save(vocabulary);
     }
@@ -41,6 +36,16 @@ public class VocabularyRepositoryImpl implements VocabularyRepository {
     @Override
     public void updateMemorizedStatus(UserVocabulary vocabulary) {
         vocabularyMapper.updateMemorizedStatus(vocabulary);
+    }
+
+    @Override
+    public List<UserVocabulary> findPaginatedByUserIdAndSearchTerm(Long userId, String searchTerm, int limit, long offset) {
+        return vocabularyMapper.findPaginatedByUserIdAndSearchTerm(userId, searchTerm, limit, offset);
+    }
+
+    @Override
+    public long countByUserIdAndSearchTerm(Long userId, String searchTerm) {
+        return vocabularyMapper.countByUserIdAndSearchTerm(userId, searchTerm);
     }
 
 }

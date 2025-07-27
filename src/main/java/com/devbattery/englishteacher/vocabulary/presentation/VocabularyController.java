@@ -5,6 +5,7 @@ import com.devbattery.englishteacher.common.exception.ServerErrorException;
 import com.devbattery.englishteacher.common.exception.UserUnauthorizedException;
 import com.devbattery.englishteacher.vocabulary.application.VocabularyService;
 import com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary;
+import com.devbattery.englishteacher.vocabulary.presentation.dto.PagedVocabResponse;
 import com.devbattery.englishteacher.vocabulary.presentation.dto.VocabResponse;
 import com.devbattery.englishteacher.vocabulary.presentation.dto.VocabSaveRequest;
 import java.nio.file.AccessDeniedException;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -33,20 +35,18 @@ public class VocabularyController {
     private final VocabularyService vocabularyService;
 
     @GetMapping
-    public ResponseEntity<List<VocabResponse>> getMyVocabulary(
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<PagedVocabResponse> getMyVocabulary(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "searchTerm", required = false) String searchTerm) {
 
         if (userPrincipal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        Long userId = userPrincipal.getId();
-        List<VocabResponse> responseList = vocabularyService.fetchMyVocabulary(userId)
-                .stream()
-                .map(VocabResponse::from)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(responseList);
+        PagedVocabResponse response = vocabularyService.fetchMyVocabularyPaginated(userPrincipal.getId(), searchTerm, page, size);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping

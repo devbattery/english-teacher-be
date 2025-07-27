@@ -6,8 +6,6 @@ import org.apache.ibatis.annotations.Param;
 
 public interface VocabularyRepository {
 
-    List<UserVocabulary> fetchByUserId(Long userId);
-
     void save(UserVocabulary vocabulary);
 
     boolean existsByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
@@ -17,5 +15,10 @@ public interface VocabularyRepository {
     UserVocabulary findByIdAndUserId(Long id, Long userId);
 
     void updateMemorizedStatus(UserVocabulary vocabulary);
+
+    List<UserVocabulary> findPaginatedByUserIdAndSearchTerm(Long userId, String searchTerm, int limit,
+                                                            long offset); // [추가]
+
+    long countByUserIdAndSearchTerm(Long userId, String searchTerm); // [추가]
 
 }

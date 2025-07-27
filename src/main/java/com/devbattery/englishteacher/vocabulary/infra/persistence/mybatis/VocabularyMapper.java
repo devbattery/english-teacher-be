@@ -8,8 +8,6 @@ import org.apache.ibatis.annotations.Param;
 @Mapper // Spring이 이 인터페이스를 MyBatis 매퍼 빈으로 등록합니다.
 public interface VocabularyMapper {
 
-    List<UserVocabulary> findByUserId(Long userId);
-
     void save(UserVocabulary vocabulary);
 
     boolean existsByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
@@ -19,5 +17,12 @@ public interface VocabularyMapper {
     UserVocabulary findByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 
     void updateMemorizedStatus(UserVocabulary vocabulary);
+
+    List<UserVocabulary> findPaginatedByUserIdAndSearchTerm(@Param("userId") Long userId,
+                                                            @Param("searchTerm") String searchTerm,
+                                                            @Param("limit") int limit,
+                                                            @Param("offset") long offset); // [추가]
+
+    long countByUserIdAndSearchTerm(@Param("userId") Long userId, @Param("searchTerm") String searchTerm); // [추가]
 
 }
