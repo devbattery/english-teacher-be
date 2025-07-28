@@ -2,6 +2,9 @@ package com.devbattery.englishteacher.common.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +19,8 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @RequiredArgsConstructor
 @Slf4j
 public class RedisConfig {
+
+    private static final String REDISSON_HOST_PREFIX = "redis://";
 
     private final RedisProperties redisProperties;
 
@@ -48,6 +53,19 @@ public class RedisConfig {
         redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
 
         return redisTemplate;
+    }
+
+    /**
+     * [추가] Redisson 클라이언트 빈 등록
+     * Redisson은 분산 락, 분산 컬렉션 등 다양한 고급 기능을 제공합니다.
+     */
+    @Bean(destroyMethod = "shutdown")
+    public RedissonClient redissonClient() {
+        Config config = new Config();
+        config.useSingleServer()
+                .setAddress(REDISSON_HOST_PREFIX + redisProperties.getHost() + ":" + redisProperties.getPort())
+                .setPassword(redisProperties.getPassword());
+        return Redisson.create(config);
     }
 
 }
