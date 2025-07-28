@@ -33,7 +33,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         OAuth2UserService<OAuth2UserRequest, OAuth2User> service = new DefaultOAuth2UserService();
         OAuth2User oAuth2User = service.loadUser(userRequest);
 
-        String registrationId = userRequest.getClientRegistration().getRegistrationId(); // google
+        String registrationId = userRequest.getClientRegistration().getRegistrationId();
         String userNameAttributeName = userRequest.getClientRegistration()
                 .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
 
@@ -43,7 +43,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         User user = (User) loginResult.get("user");
         boolean isNewUser = (boolean) loginResult.get("isNewUser");
 
-        // DefaultOAuth2User 대신 UserPrincipal을 생성하여 반환
         return new UserPrincipal(
                 user.getId(),
                 user.getEmail(),
@@ -56,6 +55,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     private Map<String, Object> login(OAuth2Attributes attributes) {
         User user;
         boolean isNewUser;
+
         try {
             user = userReadService.fetchByEmail(attributes.getEmail());
             userWriteService.update(user);

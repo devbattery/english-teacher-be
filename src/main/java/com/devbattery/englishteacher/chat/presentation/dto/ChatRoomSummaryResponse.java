@@ -12,12 +12,15 @@ public record ChatRoomSummaryResponse(
     public static ChatRoomSummaryResponse from(ChatConversation conversation) {
         String lastMessageText = "새로운 대화";
         if (conversation.getMessages() != null && !conversation.getMessages().isEmpty()) {
-            // 너무 길면 자르기
-            lastMessageText = conversation.getMessages().get(conversation.getMessages().size() - 1).getText();
+            lastMessageText = conversation.getMessages()
+                    .get(conversation.getMessages().size() - 1)
+                    .getText();
+
             if (lastMessageText.length() > 30) {
                 lastMessageText = lastMessageText.substring(0, 30) + "...";
             }
         }
+
         return new ChatRoomSummaryResponse(
                 conversation.getId(),
                 lastMessageText,

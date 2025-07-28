@@ -23,7 +23,8 @@ public class VocabularyService {
     @Transactional(readOnly = true)
     public PagedVocabResponse fetchMyVocabularyPaginated(Long userId, String searchTerm, int page, int size) {
         long offset = (long) page * size;
-        List<UserVocabulary> vocabList = vocabularyRepository.findPaginatedByUserIdAndSearchTerm(userId, searchTerm, size, offset);
+        List<UserVocabulary> vocabList = vocabularyRepository.findPaginatedByUserIdAndSearchTerm(userId, searchTerm,
+                size, offset);
         long totalElements = vocabularyRepository.countByUserIdAndSearchTerm(userId, searchTerm);
 
         List<VocabResponse> content = vocabList.stream()
@@ -45,7 +46,7 @@ public class VocabularyService {
     }
 
     @Transactional
-    public void deleteWord(Long wordId, Long userId) throws AccessDeniedException {
+    public void deleteWord(Long wordId, Long userId) {
         if (!vocabularyRepository.existsByIdAndUserId(wordId, userId)) {
             throw new UserUnauthorizedException();
         }
@@ -54,11 +55,12 @@ public class VocabularyService {
     }
 
     @Transactional
-    public void toggleMemorizedStatus(Long wordId, Long userId) throws AccessDeniedException {
+    public void toggleMemorizedStatus(Long wordId, Long userId) {
         UserVocabulary vocab = vocabularyRepository.findByIdAndUserId(wordId, userId);
         if (vocab == null) {
             throw new UserUnauthorizedException();
         }
+
         vocab.updateMemorized(!vocab.isMemorized());
         vocabularyRepository.updateMemorizedStatus(vocab);
     }

@@ -4,7 +4,6 @@ import com.devbattery.englishteacher.chat.domain.ChatConversation;
 import com.devbattery.englishteacher.chat.domain.repository.ChatConversationRepository;
 import com.devbattery.englishteacher.common.exception.ChatRoomNotFoundException;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +13,7 @@ public class ChatConversationService {
 
     private final ChatConversationRepository chatConversationRepository;
 
-    public ChatConversation findById(String conversationId) {
+    public ChatConversation fetchById(String conversationId) {
         return chatConversationRepository.findById(conversationId)
                 .orElseThrow(ChatRoomNotFoundException::new);
     }

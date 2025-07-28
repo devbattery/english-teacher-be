@@ -39,26 +39,13 @@ public class RedisConfig {
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(connectionFactory);
-
-        // Key Serializer는 String으로 설정
         redisTemplate.setKeySerializer(new StringRedisSerializer());
-
-        // Value Serializer는 Jackson 라이브러리를 이용한 JSON 직렬화 방식으로 설정
         redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-
-        // Hash Key Serializer도 String으로 설정
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-
-        // Hash Value Serializer도 JSON 직렬화 방식으로 설정
         redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
-
         return redisTemplate;
     }
 
-    /**
-     * [추가] Redisson 클라이언트 빈 등록
-     * Redisson은 분산 락, 분산 컬렉션 등 다양한 고급 기능을 제공합니다.
-     */
     @Bean(destroyMethod = "shutdown")
     public RedissonClient redissonClient() {
         Config config = new Config();

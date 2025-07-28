@@ -48,7 +48,7 @@ public class GeminiTranslationService {
             return parseTranslationFromResponse(response.getBody());
         } catch (Exception e) {
             log.error("{} 텍스트의 번역 실패", englishText, e);
-            return "번역 실패"; // 실패 시 기본값
+            return "번역 실패";
         }
     }
 

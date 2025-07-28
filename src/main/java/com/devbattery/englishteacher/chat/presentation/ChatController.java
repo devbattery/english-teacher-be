@@ -44,7 +44,6 @@ public class ChatController {
                                                         @RequestPart(value = "image", required = false) @Nullable MultipartFile image,
                                                         @AuthenticationPrincipal UserPrincipal userPrincipal) {
         Long userId = userPrincipal.getId();
-        // 서비스 호출 시 conversationId도 함께 전달합니다.
         ChatResponse response = geminiChatService.fetchChatResponse(
                 userId, request.level(), request.conversationId(), request.message(), image);
         return ResponseEntity.ok(response);

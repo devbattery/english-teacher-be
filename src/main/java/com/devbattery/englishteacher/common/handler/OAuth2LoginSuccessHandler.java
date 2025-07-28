@@ -3,7 +3,7 @@ package com.devbattery.englishteacher.common.handler;
 import com.devbattery.englishteacher.auth.application.service.AuthCodeService;
 import com.devbattery.englishteacher.auth.application.service.RefreshTokenService;
 import com.devbattery.englishteacher.auth.domain.UserPrincipal;
-import com.devbattery.englishteacher.auth.presentation.dto.AuthTokens;
+import com.devbattery.englishteacher.auth.presentation.dto.AuthToken;
 import com.devbattery.englishteacher.common.util.JwtTokenProvider;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,7 +31,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws IOException, ServletException {
+                                        Authentication authentication) throws IOException {
         log.info("OAuth2 로그인 성공. 임시 인증 코드 생성 시작.");
 
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
@@ -44,14 +44,14 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         refreshTokenService.saveToken(email, refreshToken);
         log.info("Redis에 Refresh Token 저장 완료.");
 
-        AuthTokens authTokens = new AuthTokens(accessToken, refreshToken, isNewUser);
-        String authorizationCode = authCodeService.generateAndStoreTokens(authTokens);
+        AuthToken authToken = new AuthToken(accessToken, refreshToken, isNewUser);
+        String authorizationCode = authCodeService.generateTokens(authToken);
         log.info("임시 인증 코드 생성 완료: {}", authorizationCode);
 
-        String redirectUrl = determineTargetUrl(request, response, authorizationCode);
+        String redirectUrl = determineTargetUrl(authorizationCode);
 
         if (response.isCommitted()) {
-            log.debug("Response has already been committed. Unable to redirect to {}", redirectUrl);
+            log.debug("이미 응답이 커밋됨. redirectUrl: {}", redirectUrl);
             return;
         }
 
@@ -60,18 +60,12 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         log.info("클라이언트로 임시 인증 코드를 담아 리다이렉트 완료.");
     }
 
-    protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response, String code) {
+    protected String determineTargetUrl(String code) {
         String targetUrl = url + "/auth/callback";
 
         return UriComponentsBuilder.fromUriString(targetUrl)
                 .queryParam("code", code)
                 .build().toUriString();
-    }
-
-    @Override
-    protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) {
-        return url;
     }
 
 }

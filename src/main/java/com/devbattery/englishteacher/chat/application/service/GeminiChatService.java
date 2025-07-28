@@ -104,7 +104,7 @@ public class GeminiChatService {
 
     @Transactional(readOnly = true)
     public List<ChatMessage> getConversationHistory(Long userId, String conversationId) {
-        ChatConversation conversation = chatConversationService.findById(conversationId);
+        ChatConversation conversation = chatConversationService.fetchById(conversationId);
 
         if (!conversation.getUserId().equals(userId)) {
             throw new UserUnauthorizedException();
@@ -121,7 +121,7 @@ public class GeminiChatService {
             throw new ChatMessageNotFoundException();
         }
 
-        ChatConversation conversation = chatConversationService.findById(conversationId);
+        ChatConversation conversation = chatConversationService.fetchById(conversationId);
 
         if (!conversation.getUserId().equals(userId)) {
             throw new UserUnauthorizedException();
@@ -174,7 +174,7 @@ public class GeminiChatService {
 
     @Transactional
     public void deleteConversation(Long userId, String conversationId) {
-        ChatConversation conversation = chatConversationService.findById(conversationId);
+        ChatConversation conversation = chatConversationService.fetchById(conversationId);
 
         if (!conversation.getUserId().equals(userId)) {
             throw new UserUnauthorizedException();

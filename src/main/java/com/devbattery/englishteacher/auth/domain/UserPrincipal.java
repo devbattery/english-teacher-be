@@ -16,14 +16,12 @@ public class UserPrincipal implements UserDetails, OAuth2User {
     private Map<String, Object> attributes;
     private boolean isNewUser;
 
-    // UserDetails 생성자 (JWT 인증용)
     public UserPrincipal(Long id, String email, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
         this.authorities = authorities;
     }
 
-    // OAuth2User 생성자 (OAuth 로그인용)
     public UserPrincipal(Long id, String email, Collection<? extends GrantedAuthority> authorities,
                          Map<String, Object> attributes, boolean isNewUser) {
         this.id = id;
@@ -33,7 +31,6 @@ public class UserPrincipal implements UserDetails, OAuth2User {
         this.isNewUser = isNewUser;
     }
 
-    // OAuth2User 인터페이스 메서드 구현
     @Override
     public Map<String, Object> getAttributes() {
         return attributes;
@@ -45,7 +42,6 @@ public class UserPrincipal implements UserDetails, OAuth2User {
         return email;
     }
 
-    // UserDetails 인터페이스 메서드 구현
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;

@@ -22,7 +22,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class GeminiArticleGeneratorService {
+public class GeminiDailyContentGeneratorService {
 
     @Value("${gemini.api.key-article}")
     private String apiKey;
@@ -34,7 +34,7 @@ public class GeminiArticleGeneratorService {
     private final ObjectMapper objectMapper;
     private final GeminiPromptProperties promptProperties;
 
-    public String generateArticleJson(String level) {
+    public String generateDailyContent(String level) {
         String systemPrompt = createPromptForLevel(level);
         String requestBody = createRequestBody(systemPrompt);
 
@@ -44,7 +44,7 @@ public class GeminiArticleGeneratorService {
         String apiUrl = String.format(apiTemplate, apiKey);
 
         try {
-            log.info("{} 레벨의 Gemini 글 생성", level);
+            log.info("{} 레벨의 Gemini 컨텐츠 생성", level);
             ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
             return parseContentFromResponse(response.getBody());
         } catch (HttpClientErrorException e) {
@@ -54,9 +54,6 @@ public class GeminiArticleGeneratorService {
         }
     }
 
-    /**
-     * [신규] API의 전체 JSON 응답에서 우리가 필요한 내부 JSON 문자열만 추출하는 파서 메소드입니다.
-     */
     private String parseContentFromResponse(String fullJsonResponse) {
         try {
             JsonNode rootNode = objectMapper.readTree(fullJsonResponse);
@@ -74,7 +71,7 @@ public class GeminiArticleGeneratorService {
 
         } catch (Exception e) {
             log.error("Error parsing the outer structure of Gemini JSON response: {}", fullJsonResponse, e);
-            // 파싱 실패 시에도 빈 JSON 객체 문자열을 반환하여 NullPointerException을 방지
+            // 파싱 실패 시에도 빈 JSON 객체 문자열을 반환하여 NullPointerException 방지
             return "{}";
         }
     }
@@ -88,13 +85,12 @@ public class GeminiArticleGeneratorService {
 
     private String createRequestBody(String prompt) {
         Map<String, Object> requestMap = new HashMap<>();
-
         List<Map<String, Object>> contents = List.of(
                 Map.of("role", "user", "parts", List.of(Map.of("text", prompt)))
         );
-        requestMap.put("contents", contents);
-
         Map<String, Object> generationConfig = Map.of("response_mime_type", "application/json");
+
+        requestMap.put("contents", contents);
         requestMap.put("generationConfig", generationConfig);
 
         try {

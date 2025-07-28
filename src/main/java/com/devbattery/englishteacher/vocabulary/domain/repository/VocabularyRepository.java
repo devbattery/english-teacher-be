@@ -17,8 +17,8 @@ public interface VocabularyRepository {
     void updateMemorizedStatus(UserVocabulary vocabulary);
 
     List<UserVocabulary> findPaginatedByUserIdAndSearchTerm(Long userId, String searchTerm, int limit,
-                                                            long offset); // [추가]
+                                                            long offset);
 
-    long countByUserIdAndSearchTerm(Long userId, String searchTerm); // [추가]
+    long countByUserIdAndSearchTerm(Long userId, String searchTerm);
 
 }

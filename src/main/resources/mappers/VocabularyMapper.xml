@@ -4,20 +4,16 @@
 
 <mapper namespace="com.devbattery.englishteacher.vocabulary.infra.persistence.mybatis.VocabularyMapper">
 
-    <!-- DB 컬럼과 Java 객체 필드를 명시적으로 매핑하는 resultMap 정의 -->
-    <resultMap id="UserVocabularyResultMap" type="com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary">
-        <id property="id" column="id" />
-        <result property="userId" column="user_id" />
-        <result property="englishExpression" column="english_expression" />
-        <result property="koreanMeaning" column="korean_meaning" />
-        <result property="createdAt" column="created_at" />
-        <result property="isMemorized" column="is_memorized" />
+    <resultMap id="UserVocabularyResultMap"
+               type="com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="englishExpression" column="english_expression"/>
+        <result property="koreanMeaning" column="korean_meaning"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="isMemorized" column="is_memorized"/>
     </resultMap>
 
-    <!--
-      ID와 사용자 ID로 단일 단어를 조회합니다 (소유권 검증 및 상태 업데이트용).
-      마찬가지로 resultMap을 사용하여 정확한 매핑을 보장합니다.
-    -->
     <select id="findByIdAndUserId" parameterType="map" resultMap="UserVocabularyResultMap">
         SELECT id,
                user_id,
@@ -26,34 +22,24 @@
                created_at,
                is_memorized
         FROM USER_VOCABULARY
-        WHERE id = #{id} AND user_id = #{userId}
+        WHERE id = #{id}
+          AND user_id = #{userId}
     </select>
 
-    <!--
-      새로운 단어를 저장합니다.
-      useGeneratedKeys="true"와 keyProperty="id"를 통해, insert 후
-      파라미터로 전달된 UserVocabulary 객체의 id 필드에 자동 생성된 PK값이 채워집니다.
-    -->
     <insert id="save" parameterType="com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary"
             useGeneratedKeys="true" keyProperty="id">
         INSERT INTO USER_VOCABULARY (user_id, english_expression, korean_meaning, is_memorized)
         VALUES (#{userId}, #{englishExpression}, #{koreanMeaning}, #{isMemorized})
     </insert>
 
-    <!--
-      단어의 '외웠음' 상태를 업데이트합니다.
-      파라미터로 받은 UserVocabulary 객체의 isMemorized 필드 값을 사용합니다.
-    -->
-    <update id="updateMemorizedStatus" parameterType="com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary">
+    <update id="updateMemorizedStatus"
+            parameterType="com.devbattery.englishteacher.vocabulary.domain.entity.UserVocabulary">
         UPDATE USER_VOCABULARY
         SET is_memorized = #{isMemorized}
-        WHERE id = #{id} AND user_id = #{userId}
+        WHERE id = #{id}
+          AND user_id = #{userId}
     </update>
 
-    <!--
-      단어 ID와 사용자 ID로 단어 존재 여부를 확인합니다 (삭제 권한 체크용).
-      COUNT(*) > 0 결과를 boolean 타입으로 반환합니다.
-    -->
     <select id="existsByIdAndUserId" parameterType="map" resultType="boolean">
         SELECT COUNT(*) > 0
         FROM USER_VOCABULARY
@@ -61,32 +47,31 @@
           AND user_id = #{userId}
     </select>
 
-    <!-- 단어를 삭제합니다. -->
     <delete id="deleteById" parameterType="long">
         DELETE
         FROM USER_VOCABULARY
         WHERE id = #{id}
     </delete>
 
-    <!-- [수정] 페이지네이션과 검색을 위한 새로운 find 쿼리 -->
     <select id="findPaginatedByUserIdAndSearchTerm" resultMap="UserVocabularyResultMap">
         SELECT id, user_id, english_expression, korean_meaning, created_at, is_memorized
         FROM USER_VOCABULARY
         WHERE user_id = #{userId}
         <if test="searchTerm != null and searchTerm != ''">
-            AND (english_expression LIKE CONCAT('%', #{searchTerm}, '%') OR korean_meaning LIKE CONCAT('%', #{searchTerm}, '%'))
+            AND (english_expression LIKE CONCAT('%', #{searchTerm}, '%') OR korean_meaning LIKE CONCAT('%',
+            #{searchTerm}, '%'))
         </if>
         ORDER BY created_at DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
-    <!-- [추가] 페이지네이션을 위한 전체 개수 카운트 쿼리 -->
     <select id="countByUserIdAndSearchTerm" resultType="long">
         SELECT COUNT(*)
         FROM USER_VOCABULARY
         WHERE user_id = #{userId}
         <if test="searchTerm != null and searchTerm != ''">
-            AND (english_expression LIKE CONCAT('%', #{searchTerm}, '%') OR korean_meaning LIKE CONCAT('%', #{searchTerm}, '%'))
+            AND (english_expression LIKE CONCAT('%', #{searchTerm}, '%') OR korean_meaning LIKE CONCAT('%',
+            #{searchTerm}, '%'))
         </if>
     </select>
 

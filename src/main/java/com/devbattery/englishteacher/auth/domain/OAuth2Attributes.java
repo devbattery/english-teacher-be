@@ -10,6 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class OAuth2Attributes {
 
+    private static final String REG_NAVER = "naver";
+    private static final String REG_KAKAO = "kakao";
+
     private Map<String, Object> attributes;
     private String nameAttributeKey;
     private String name;
@@ -28,35 +31,27 @@ public class OAuth2Attributes {
 
     public static OAuth2Attributes of(String registrationId, String userNameAttributeName,
                                       Map<String, Object> attributes) {
-        if ("naver".equals(registrationId)) {
+        if (REG_NAVER.equals(registrationId)) {
             return ofNaver("id", attributes);
         }
 
-        if ("kakao".equals(registrationId)) {
+        if (REG_KAKAO.equals(registrationId)) {
             return ofKakao("id", attributes);
         }
 
         return ofGoogle(userNameAttributeName, attributes);
     }
 
-    /**
-     * Google 사용자 정보를 받아 OAuthAttributes 객체 생성
-     */
     private static OAuth2Attributes ofGoogle(String userNameAttributeName, Map<String, Object> attributes) {
         return OAuth2Attributes.builder()
                 .name((String) attributes.get("name"))
                 .email((String) attributes.get("email"))
                 .imageUrl((String) attributes.get("picture"))
-                //  Spring Security는 attributes 맵과 nameAttributeKey를 사용해서 데이터베이스에 사용자가 이미 있는지 여부를 판단하고, 사용자를 고유하게 식별함
                 .attributes(attributes)
                 .nameAttributeKey(userNameAttributeName)
                 .build();
     }
 
-    /**
-     * Naver 사용자 정보를 받아 OAuthAttributes 객체 생성
-     * Naver의 응답값은 "response"라는 키 값 내부에 실제 사용자 정보가 들어있습니다. (id 같은 거)
-     */
     private static OAuth2Attributes ofNaver(String userNameAttributeName, Map<String, Object> attributes) {
         Map<String, Object> response = (Map<String, Object>) attributes.get("response");
 
@@ -69,11 +64,6 @@ public class OAuth2Attributes {
                 .build();
     }
 
-    /**
-     * Kakao 사용자 정보를 받아 OAuthAttributes 객체 생성
-     * Kakao의 응답값은 "kakao_account" 키 내부에 이메일이,
-     * "kakao_account" 내부의 "profile" 키 내부에 닉네임과 프로필 사진이 들어있습니다.
-     */
     private static OAuth2Attributes ofKakao(String userNameAttributeName, Map<String, Object> attributes) {
         // "kakao_account"에 사용자 정보가 담겨 있음
         Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
@@ -84,7 +74,7 @@ public class OAuth2Attributes {
                 .name((String) kakaoProfile.get("nickname"))
                 .email((String) kakaoAccount.get("email"))
                 .imageUrl((String) kakaoProfile.get("profile_image_url"))
-                .attributes(attributes) // 최상위 맵을 attributes로 사용
+                .attributes(attributes)
                 .nameAttributeKey(userNameAttributeName)
                 .build();
     }

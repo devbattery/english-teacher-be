@@ -9,7 +9,7 @@ import org.springframework.data.annotation.CreatedDate;
 @Getter
 public class ChatMessage {
 
-    private String sender; // "user", "ai"
+    private String sender;
     private String text;
 
     @CreatedDate

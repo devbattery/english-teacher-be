@@ -9,8 +9,6 @@ import com.devbattery.englishteacher.vocabulary.presentation.dto.PagedVocabRespo
 import com.devbattery.englishteacher.vocabulary.presentation.dto.VocabResponse;
 import com.devbattery.englishteacher.vocabulary.presentation.dto.VocabSaveRequest;
 import java.nio.file.AccessDeniedException;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -35,7 +33,7 @@ public class VocabularyController {
     private final VocabularyService vocabularyService;
 
     @GetMapping
-    public ResponseEntity<PagedVocabResponse> getMyVocabulary(
+    public ResponseEntity<PagedVocabResponse> fetchMyVocabulary(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size,
@@ -45,7 +43,8 @@ public class VocabularyController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        PagedVocabResponse response = vocabularyService.fetchMyVocabularyPaginated(userPrincipal.getId(), searchTerm, page, size);
+        PagedVocabResponse response = vocabularyService.fetchMyVocabularyPaginated(userPrincipal.getId(), searchTerm,
+                page, size);
         return ResponseEntity.ok(response);
     }
 
@@ -59,34 +58,21 @@ public class VocabularyController {
         }
 
         Long userId = userPrincipal.getId();
-
-        try {
-            UserVocabulary savedWord = vocabularyService.saveNewWord(request, userId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(VocabResponse.from(savedWord));
-        } catch (Exception e) {
-            throw new ServerErrorException();
-        }
+        UserVocabulary savedWord = vocabularyService.saveNewWord(request, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(VocabResponse.from(savedWord));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteWord(
             @PathVariable("id") Long wordId,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-
         if (userPrincipal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         Long userId = userPrincipal.getId();
-
-        try {
-            vocabularyService.deleteWord(wordId, userId);
-            return ResponseEntity.noContent().build();
-        } catch (AccessDeniedException e) {
-            throw new UserUnauthorizedException();
-        } catch (Exception e) {
-            throw new ServerErrorException();
-        }
+        vocabularyService.deleteWord(wordId, userId);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/toggle-memorized")
@@ -98,14 +84,8 @@ public class VocabularyController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        try {
-            vocabularyService.toggleMemorizedStatus(wordId, userPrincipal.getId());
-            return ResponseEntity.ok().build();
-        } catch (AccessDeniedException e) {
-            throw new UserUnauthorizedException();
-        } catch (Exception e) {
-            throw new ServerErrorException();
-        }
+        vocabularyService.toggleMemorizedStatus(wordId, userPrincipal.getId());
+        return ResponseEntity.ok().build();
     }
 
 }

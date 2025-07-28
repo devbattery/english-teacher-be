@@ -19,12 +19,10 @@ public class LearningController {
     private final UserReadService userReadService;
 
     @GetMapping("/api/learning/today/{level}")
-    public ResponseEntity<?> getDailyLearningContent(
-            @PathVariable String level,
-            @AuthenticationPrincipal UserPrincipal userPrincipal // [수정] 현재 로그인한 사용자 정보를 받음
-    ) {
+    public ResponseEntity<?> getDailyLearningContent(@PathVariable String level,
+                                                     @AuthenticationPrincipal UserPrincipal userPrincipal) {
         String userName = userReadService.fetchById(userPrincipal.getId()).getName();
-        LearningContentResponse content = learningService.getDailyContent(level, userName);
+        LearningContentResponse content = learningService.fetchDailyContent(level, userName);
         return ResponseEntity.ok(content);
     }
 

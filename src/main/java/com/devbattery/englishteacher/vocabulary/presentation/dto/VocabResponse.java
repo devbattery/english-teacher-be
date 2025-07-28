@@ -13,8 +13,10 @@ public class VocabResponse {
     private Long id;
     private String englishExpression;
     private String koreanMeaning;
+
     @JsonProperty("isMemorized")
     private boolean isMemorized;
+
     private LocalDateTime createdAt;
 
     public VocabResponse(Long id, String englishExpression, String koreanMeaning, boolean isMemorized,

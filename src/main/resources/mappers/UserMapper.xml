@@ -2,14 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- namespace는 매퍼 인터페이스의 전체 경로와 일치해야 합니다. -->
 <mapper namespace="com.devbattery.englishteacher.user.infra.persistence.mybatis.UserMapper">
 
-    <!--
-        findByEmail 메소드에 대한 SQL.
-        resultType을 User로 지정하면 MyBatis가 결과를 User 객체에 매핑해줍니다.
-        (application.yml의 map-underscore-to-camel-case 설정 덕분에 컬럼명과 필드명이 자동 매핑됩니다)
-    -->
     <select id="findByEmail" parameterType="String" resultType="com.devbattery.englishteacher.user.domain.entity.User">
         SELECT ID, NAME, EMAIL, IMAGE_URL, ROLE
         FROM USERS
@@ -22,20 +16,11 @@
         WHERE ID = #{userId}
     </select>
 
-    <!--
-        save 메소드에 대한 SQL.
-        User 객체를 파라미터로 받아 각 필드를 컬럼에 삽입합니다.
-        Role Enum 타입은 MyBatis가 기본적으로 이름(GUEST, USER)으로 처리합니다.
-    -->
     <insert id="save" parameterType="com.devbattery.englishteacher.user.domain.entity.User">
         INSERT INTO USERS (NAME, EMAIL, IMAGE_URL, ROLE)
         VALUES (#{name}, #{email}, #{imageUrl}, #{role})
     </insert>
 
-    <!--
-        update 메소드에 대한 SQL.
-        이름과 프로필 사진을 업데이트합니다.
-    -->
     <update id="update" parameterType="com.devbattery.englishteacher.user.domain.entity.User">
         UPDATE USERS
         SET NAME      = #{name},

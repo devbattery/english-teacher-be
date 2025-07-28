@@ -1,5 +1,6 @@
 package com.devbattery.englishteacher.common.handler.json;
 
+import com.devbattery.englishteacher.common.exception.JsonSerializedException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -12,7 +13,7 @@ import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.MappedTypes;
 
-@MappedTypes({Object.class, List.class}) // List 타입도 명시적으로 추가
+@MappedTypes({Object.class, List.class})
 public class JsonTypeHandler<T> extends BaseTypeHandler<T> {
 
     private static final ObjectMapper objectMapper = createObjectMapper();
@@ -39,7 +40,7 @@ public class JsonTypeHandler<T> extends BaseTypeHandler<T> {
         try {
             ps.setString(i, objectMapper.writeValueAsString(parameter));
         } catch (Exception e) {
-            throw new RuntimeException("Error serializing object to JSON", e);
+            throw new JsonSerializedException();
         }
     }
 
@@ -66,7 +67,7 @@ public class JsonTypeHandler<T> extends BaseTypeHandler<T> {
             return objectMapper.readValue(json, new TypeReference<T>() {
             });
         } catch (Exception e) {
-            throw new RuntimeException("Error deserializing JSON to object. JSON: " + json, e);
+            throw new JsonSerializedException();
         }
     }
 

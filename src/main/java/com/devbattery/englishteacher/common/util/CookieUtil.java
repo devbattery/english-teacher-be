@@ -3,6 +3,7 @@ package com.devbattery.englishteacher.common.util;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import java.util.Optional;
 import org.springframework.http.ResponseCookie;
 
@@ -16,7 +17,7 @@ public class CookieUtil {
                 .path("/")
                 .maxAge(maxAge)
                 .httpOnly(true)
-                .secure(true) // https 환경
+                .secure(true)
                 .sameSite("Strict")
                 .build();
 
@@ -37,15 +38,14 @@ public class CookieUtil {
 
     public static Optional<Cookie> getCookie(HttpServletRequest request, String name) {
         Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (name.equals(cookie.getName())) {
-                    return Optional.of(cookie);
-                }
-            }
+
+        if (cookies == null) {
+            return Optional.empty();
         }
 
-        return Optional.empty();
+        return Arrays.stream(cookies)
+                .filter(cookie -> name.equals(cookie.getName()))
+                .findFirst();
     }
 
 }

@@ -2,7 +2,8 @@ package com.devbattery.englishteacher.auth.presentation;
 
 import com.devbattery.englishteacher.auth.application.service.AuthCodeService;
 import com.devbattery.englishteacher.auth.application.service.RefreshTokenService;
-import com.devbattery.englishteacher.auth.presentation.dto.AuthTokens;
+import com.devbattery.englishteacher.auth.presentation.dto.AuthToken;
+import com.devbattery.englishteacher.auth.presentation.dto.AuthTokenResponse;
 import com.devbattery.englishteacher.common.util.CookieUtil;
 import com.devbattery.englishteacher.common.util.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
@@ -30,34 +31,24 @@ public class TokenController {
     @Value("${jwt.refresh-token-expire-time}")
     private long refreshTokenExpireTime;
 
-    /**
-     * OAuth2 로그인 성공 후 받은 임시 인증 코드를 실제 토큰으로 교환합니다.
-     */
     @PostMapping("/api/auth/token")
-    public ResponseEntity<?> exchangeCodeForTokens(@RequestBody Map<String, String> payload,
-                                                   HttpServletResponse response) {
+    public ResponseEntity<?> exchangeCodeForToken(@RequestBody Map<String, String> payload,
+                                                  HttpServletResponse response) {
         String code = payload.get("code");
         if (code == null) {
-            return ResponseEntity.badRequest().body("Authorization code is missing.");
+            return ResponseEntity.badRequest().body("인증 코드가 없습니다.");
         }
 
-        Optional<AuthTokens> tokensOptional = authCodeService.retrieveAndRemoveTokens(code);
-
-        if (tokensOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired authorization code.");
+        Optional<AuthToken> tokenOptional = authCodeService.getToken(code);
+        if (tokenOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("틀리거나 만료된 토큰입니다.");
         }
+        AuthToken tokens = tokenOptional.get();
 
-        AuthTokens tokens = tokensOptional.get();
-
-        // HttpOnly 쿠키에 Refresh Token 설정
         int cookieMaxAge = (int) (refreshTokenExpireTime / 1000);
         CookieUtil.addCookie(response, "refresh_token", tokens.getRefreshToken(), cookieMaxAge);
 
-        // Access Token과 isNewUser는 응답 바디로 전달
-        return ResponseEntity.ok(Map.of(
-                "accessToken", tokens.getAccessToken(),
-                "isNewUser", tokens.getIsNewUser()
-        ));
+        return ResponseEntity.ok(new AuthTokenResponse(tokens.getAccessToken(), tokens.getIsNewUser()));
     }
 
     @PostMapping("/api/auth/refresh")
@@ -67,13 +58,12 @@ public class TokenController {
                 .orElse(null);
 
         if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Refresh Token");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("잘못된 refresh token입니다.");
         }
 
+        // Redis에 저장된 토큰과 맞는지 재확인
         String email = jwtTokenProvider.getEmailFromToken(refreshToken);
         String savedToken = refreshTokenService.getToken(email);
-
-        // Redis에 저장된 토큰과 맞는지 재확인
         if (savedToken == null || !savedToken.equals(refreshToken)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh Token not found or mismatched");
         }
@@ -84,27 +74,21 @@ public class TokenController {
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
     }
 
-    /**
-     * 로그아웃을 처리합니다. 클라이언트의 Refresh Token 쿠키를 무효화하고, 서버(Redis)에서도 삭제합니다.
-     */
     @PostMapping("/api/auth/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        // 1. 쿠키에서 리프레시 토큰 가져오기
         Optional<Cookie> refreshTokenCookie = CookieUtil.getCookie(request, "refresh_token");
 
         if (refreshTokenCookie.isPresent()) {
             String refreshToken = refreshTokenCookie.get().getValue();
-            // 2. Redis에서 해당 리프레시 토큰 삭제
             if (jwtTokenProvider.validateToken(refreshToken)) {
                 String email = jwtTokenProvider.getEmailFromToken(refreshToken);
                 refreshTokenService.deleteToken(email);
             }
         }
 
-        // 3. 클라이언트의 리프레시 토큰 쿠키를 삭제
         CookieUtil.deleteCookie(response, "refresh_token");
 
-        return ResponseEntity.ok("Successfully logged out");
+        return ResponseEntity.ok().build();
     }
 
 }

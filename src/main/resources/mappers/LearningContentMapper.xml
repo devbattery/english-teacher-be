@@ -14,24 +14,23 @@
     </resultMap>
 
     <select id="findByLevelAndDate" resultMap="LearningContentResultMap">
-        SELECT
-        id,
-        level,
-        title,
-        content,
-        key_expressions,
-        generated_by_user_name, <!-- [추가] -->
-        created_date
-        FROM
-        LEARNING_CONTENT
-        WHERE
-        level = #{level} AND created_date = #{date}
+        SELECT id,
+               level,
+               title,
+               content,
+               key_expressions,
+               generated_by_user_name,
+               created_date
+        FROM LEARNING_CONTENT
+        WHERE level = #{level}
+          AND created_date = #{date}
     </select>
 
     <insert id="save" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO LEARNING_CONTENT (level, title, content, key_expressions, generated_by_user_name, created_date) <!-- [수정] -->
+        INSERT INTO LEARNING_CONTENT (level, title, content, key_expressions, generated_by_user_name,
+                                      created_date)
         VALUES (#{level}, #{title}, #{content},
-        #{keyExpressions, typeHandler=com.devbattery.englishteacher.common.handler.json.JsonTypeHandler},
-        #{generatedByUserName}, #{createdDate}) <!-- [수정] -->
+                #{keyExpressions, typeHandler=com.devbattery.englishteacher.common.handler.json.JsonTypeHandler},
+                #{generatedByUserName}, #{createdDate})
     </insert>
 </mapper>

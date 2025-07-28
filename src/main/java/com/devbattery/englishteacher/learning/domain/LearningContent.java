@@ -15,10 +15,9 @@ public class LearningContent {
     private String title;
     private String content;
     private List<KeyExpression> keyExpressions;
-    private String generatedByUserName; // [추가] 생성자 유저 이름 필드
+    private String generatedByUserName;
     private LocalDate createdDate;
 
-    // [수정] 생성자에 generatedByUserName 추가
     public LearningContent(Long id, String level, String title, String content, List<KeyExpression> keyExpressions,
                            String generatedByUserName, LocalDate createdDate) {
         this.id = id;
@@ -29,4 +28,5 @@ public class LearningContent {
         this.generatedByUserName = generatedByUserName;
         this.createdDate = createdDate;
     }
+
 }

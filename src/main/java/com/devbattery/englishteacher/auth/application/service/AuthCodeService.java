@@ -1,6 +1,6 @@
 package com.devbattery.englishteacher.auth.application.service;
 
-import com.devbattery.englishteacher.auth.presentation.dto.AuthTokens;
+import com.devbattery.englishteacher.auth.presentation.dto.AuthToken;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,22 +17,16 @@ public class AuthCodeService {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    /**
-     * 토큰들을 저장하고 이에 대한 임시 인증 코드를 생성
-     */
-    public String generateAndStoreTokens(AuthTokens tokens) {
+    public String generateTokens(AuthToken tokens) {
         String code = UUID.randomUUID().toString();
         String key = AUTH_CODE_PREFIX + code;
         redisTemplate.opsForValue().set(key, tokens, AUTH_CODE_EXPIRATION);
         return code;
     }
 
-    /**
-     * 임시 인증 코드를 사용하여 저장된 토큰을 조회하고, 코드는 즉시 삭제
-     */
-    public Optional<AuthTokens> retrieveAndRemoveTokens(String code) {
+    public Optional<AuthToken> getToken(String code) {
         String key = AUTH_CODE_PREFIX + code;
-        AuthTokens tokens = (AuthTokens) redisTemplate.opsForValue().get(key);
+        AuthToken tokens = (AuthToken) redisTemplate.opsForValue().get(key);
         if (tokens != null) {
             redisTemplate.delete(key); // 한 번 사용된 코드는 즉시 삭제
         }

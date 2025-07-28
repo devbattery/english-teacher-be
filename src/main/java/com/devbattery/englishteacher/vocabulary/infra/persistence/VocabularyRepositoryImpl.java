@@ -39,7 +39,8 @@ public class VocabularyRepositoryImpl implements VocabularyRepository {
     }
 
     @Override
-    public List<UserVocabulary> findPaginatedByUserIdAndSearchTerm(Long userId, String searchTerm, int limit, long offset) {
+    public List<UserVocabulary> findPaginatedByUserIdAndSearchTerm(Long userId, String searchTerm, int limit,
+                                                                   long offset) {
         return vocabularyMapper.findPaginatedByUserIdAndSearchTerm(userId, searchTerm, limit, offset);
     }
 
