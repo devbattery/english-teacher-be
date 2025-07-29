@@ -2,32 +2,31 @@ package com.devbattery.englishteacher.acceptance.util;
 
 import jakarta.annotation.PostConstruct;
 import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DatabaseCleanup {
 
-//    @PersistenceContext
-//    private EntityManager entityManager;
-//
-//    private List<String> tableNames;
-//
-//    @PostConstruct
-//    public void init() {
-//        tableNames = (List<String>) entityManager.createNativeQuery("SHOW TABLES").getResultList()
-//                .stream()
-//                .collect(Collectors.toList());
-//    }
-//
-//    @Transactional
-//    public void execute() {
-//        entityManager.flush();
-//        entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 0").executeUpdate();
-//        for (String tableName : tableNames) {
-//            entityManager.createNativeQuery("DELETE FROM " + tableName).executeUpdate();
-//        }
-//        entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate();
-//    }
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    private List<String> tableNames;
+
+    @PostConstruct
+    public void init() {
+        tableNames = jdbcTemplate.queryForList("SHOW TABLES", String.class);
+    }
+
+    @Transactional
+    public void execute() {
+        jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
+        for (String tableName : tableNames) {
+            jdbcTemplate.execute("TRUNCATE TABLE " + tableName);
+        }
+        jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
+    }
 
 }

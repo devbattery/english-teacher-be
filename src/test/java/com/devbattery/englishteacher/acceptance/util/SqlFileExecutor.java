@@ -1,37 +1,48 @@
 package com.devbattery.englishteacher.acceptance.util;
 
-import org.springframework.stereotype.Service   ;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SqlFileExecutor {
 
-//    @PersistenceContext
-//    private EntityManager entityManager;
-//
-//    @Transactional
-//    public void execute(String sqlFilePath) {
-//        try {
-//            entityManager.flush();
-//            String path = sqlFilePath;
-//            String sqlScript = readResourceFile(path);
-//
-//            String[] queries = sqlScript.split(";");
-//            for (String query : queries) {
-//                if (!query.trim().isEmpty()) {
-//                    entityManager.createNativeQuery(query).executeUpdate();
-//                }
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    private String readResourceFile(String path) throws IOException {
-//        Resource resource = new ClassPathResource(path);
-//        try (InputStream inputStream = resource.getInputStream();
-//             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-//            return reader.lines().collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString();
-//        }
-//    }
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Transactional
+    public void execute(String sqlFilePath) {
+        try {
+            Resource resource = new ClassPathResource(sqlFilePath);
+            String sqlScript = readFromInputStream(resource.getInputStream());
+
+            String[] queries = sqlScript.split(";");
+            for (String query : queries) {
+                if (!query.trim().isEmpty()) {
+                    jdbcTemplate.execute(query);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to execute SQL file: " + sqlFilePath, e);
+        }
+    }
+
+    private String readFromInputStream(InputStream inputStream) throws IOException {
+        StringBuilder resultStringBuilder = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                resultStringBuilder.append(line).append("\n");
+            }
+        }
+        return resultStringBuilder.toString();
+    }
 
 }
