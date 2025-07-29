@@ -13,6 +13,7 @@ public class AuthEndpoints {
             "/uploads/**",
             "/js/**",
             "/h2-console/**",
+            "/docs/**",
             // 소셜 로그인 관련
             "/oauth2/**",
             // 토큰 관련 API
