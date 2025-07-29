@@ -89,19 +89,16 @@ asciidoctor {
     inputs.dir snippetsDir
     configurations 'asciidoctorExt'
     dependsOn test
-}
-
-task copyDocs(type: Copy) {
-    dependsOn asciidoctor
-    from ("${asciidoctor.outputDir}")
-    into 'src/main/resources/static/docs'
+    doLast {
+        copy {
+            from outputDir
+            into 'src/main/resources/static/docs'
+        }
+    }
 }
 
 bootJar {
-    dependsOn copyDocs
-    from("${asciidoctor.outputDir}") {
-        into "BOOT-INF/classes/static/docs"
-    }
+    dependsOn asciidoctor
 }
 
 tasks.named('test') {
