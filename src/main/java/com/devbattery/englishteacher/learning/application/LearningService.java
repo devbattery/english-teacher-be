@@ -25,6 +25,8 @@ public class LearningService {
     private static final String LOCK_PREFIX = "lock:learning-content:";
     private static final long WAIT_TIME_SECONDS = 10L;
     private static final long LEASE_TIME_SECONDS = 60L;
+    private static final String GENERATED_STATUS = "GENERATED_NEW";
+    private static final String WAITING_STATUS = "FOUND_EXISTING_AFTER_WAIT";
 
     public LearningContentResponse fetchDailyContent(String level, String userName) {
         LocalDate today = LocalDate.now();
@@ -51,8 +53,7 @@ public class LearningService {
             LearningContent content = learningDailyContentCreator.createDailyContent(level, today, userName);
 
             // 생성자와 요청자가 같은지 확인
-            String status =
-                    content.getGeneratedByUserName().equals(userName) ? "GENERATED_NEW" : "FOUND_EXISTING_AFTER_WAIT";
+            String status = content.getGeneratedByUserName().equals(userName) ? GENERATED_STATUS : WAITING_STATUS;
             return new LearningContentResponse(status, content);
 
         } catch (InterruptedException e) {
