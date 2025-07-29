@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.3'
     id 'io.spring.dependency-management' version '1.1.7'
+    id "org.asciidoctor.jvm.convert" version "3.3.2"
 }
 
 group = 'com.devbattery'
@@ -11,6 +12,14 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
     }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+
+    asciidoctorExt
 }
 
 repositories {
@@ -43,10 +52,50 @@ dependencies {
 
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
+    // Test Containers
+    testImplementation 'org.testcontainers:testcontainers:1.21.3'
+    testImplementation 'org.testcontainers:junit-jupiter:1.18.3'
+    testImplementation 'org.testcontainers:mysql:1.18.3'
+    testImplementation "org.testcontainers:mongodb:1.21.3"
+
+    // Rest Assured
+    testImplementation 'io.rest-assured:rest-assured:5.5.5'
+    testImplementation 'io.rest-assured:json-path:5.3.0'
+    testImplementation 'io.rest-assured:xml-path:5.3.0'
+
+    // Spring REST Docs
+    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+    asciidoctorExt 'org.springframework.restdocs:spring-restdocs-asciidoctor'
+    testImplementation 'org.springframework.restdocs:spring-restdocs-restassured:3.0.0'
+
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.20'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
+}
+
+ext {
+    snippetsDir = file('build/generated-snippets')
+}
+
+test {
+    outputs.dir snippetsDir
+}
+
+asciidoctor {
+    inputs.dir snippetsDir
+    configurations 'asciidoctorExt'
+    dependsOn test
+}
+
+bootJar {
+    dependsOn asciidoctor
+    from("${asciidoctor.outputDir}") {
+        into "BOOT-INF/classes/static/docs"
+    }
 }
 
 tasks.named('test') {

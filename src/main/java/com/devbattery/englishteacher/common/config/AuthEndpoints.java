@@ -18,7 +18,8 @@ public class AuthEndpoints {
             // 토큰 관련 API
             "/api/auth/token",
             "/api/auth/refresh",
-            "/api/auth/logout"
+            "/api/auth/logout",
+            "/api/test/login"
     };
 
 }

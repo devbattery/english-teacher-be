@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
-        log.error("handleException: {}", e.getMessage());
+        log.error("Unhandled Exception in GlobalExceptionHandler: ", e);
         ErrorResponse response = new ErrorResponse(ErrorCode.SERVER_ERROR);
         return new ResponseEntity<>(response, ErrorCode.SERVER_ERROR.getStatus());
     }
