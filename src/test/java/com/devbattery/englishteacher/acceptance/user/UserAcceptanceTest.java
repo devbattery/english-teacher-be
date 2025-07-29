@@ -13,13 +13,13 @@ class UserAcceptanceTest extends AcceptanceTest {
 
     @Nested
     @DisplayName("회원 가입 인수테스트")
-    class RegisterMember {
+    class SaveUser {
 
-        @DisplayName("회원 가입 시 성공하면, 상태코드 200과 id를 반환하고 회원 프로필이 조회된다.")
+        @DisplayName("최초 로그인(회원 가입)이 성공하면, 상태코드 200을 반환한다.")
         @Test
-        void when_signupMember_then_response200AndId_and_canFetchMemberProfile() {
+        void when_first_login_then_response_200() {
             // docs
-            api_문서_타이틀("signupMember_success", spec);
+            api_문서_타이틀("firstLogin_success", spec);
 
             // when
             var response = 비회원이_로그인한다(spec);
